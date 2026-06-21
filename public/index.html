@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G&B GAME STORE</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+:root{--bg:#0a0a1a;--card:#111;--card2:#1a1a2e;--border:#222;--accent:#00f0ff;--accent2:#7b2fff;--text:#fff;--text2:#888;--danger:#ff4466;--success:#00cc66;--warn:#ff9900;--grad:linear-gradient(135deg,#00f0ff,#7b2fff);--radius:14px;--shadow:0 4px 20px rgba(0,0,0,.3)}
+*{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:.3s;font-size:14px}
+body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--text2:#666;--shadow:0 4px 20px rgba(0,0,0,.08)}
+.topbar{background:var(--card);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--accent);position:sticky;top:0;z-index:100}
+.topbar h1{font-size:1.1rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;font-weight:900;cursor:pointer;white-space:nowrap}
+.topbar nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.topbar button{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:.7rem;transition:.2s;white-space:nowrap}
+.topbar button:hover,.topbar button.active{background:var(--accent);color:#000}
+.user-badge{color:var(--text2);font-size:.7rem;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.user-badge b{color:var(--accent)}
+.notif-badge{background:var(--danger);color:#fff;font-size:.55rem;padding:1px 4px;border-radius:8px}
+.online-dot{width:6px;height:6px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.screen{display:none;padding:30px 16px;max-width:480px;margin:40px auto;animation:fadeIn .3s}
+.screen.active{display:block}
+.auth-box{background:var(--card);padding:24px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.auth-box h2{text-align:center;margin-bottom:14px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem}
+.auth-box input{width:100%;padding:10px 12px;margin-bottom:10px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:.85rem;transition:.2s}
+.auth-box input:focus{border-color:var(--accent);outline:none}
+.auth-box button.btn{width:100%;padding:10px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:bold;cursor:pointer;margin-top:4px;transition:.2s}
+.auth-box button.btn:hover{transform:translateY(-1px)}
+.auth-box p{text-align:center;margin-top:12px;color:var(--text2);font-size:.75rem}
+.auth-box p a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.error{color:var(--danger);font-size:.7rem;margin-bottom:6px;text-align:center}
+.page{display:none;padding:16px;max-width:1200px;margin:0 auto;animation:fadeIn .3s}
+.page.active{display:block}
+.page h2{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px;font-size:1.1rem}
+.toolbar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-box{flex:1;min-width:150px;padding:8px 12px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:20px;font-size:.8rem}
+.search-box:focus{border-color:var(--accent);outline:none}
+.sort-select{padding:8px 10px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:20px;font-size:.8rem;cursor:pointer}
+.filter-btn{padding:5px 12px;background:var(--card);border:1px solid var(--border);color:var(--text2);border-radius:16px;cursor:pointer;font-size:.7rem;transition:.2s}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.featured-section{margin-bottom:20px}
+.featured-section h3{color:var(--accent);margin-bottom:10px;font-size:.95rem}
+.featured-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.featured-scroll::-webkit-scrollbar{height:4px}
+.featured-scroll::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+.featured-card{min-width:260px;background:var(--card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);flex-shrink:0;cursor:pointer;transition:.2s}
+.featured-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.featured-card img{width:100%;height:130px;object-fit:cover}
+.featured-card .info{padding:10px}
+.featured-card .info h3{font-size:.9rem;margin-bottom:3px}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.game-card{background:var(--card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:.3s;position:relative;animation:slideIn .3s}
+.game-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,240,255,.1)}
+.game-card .badge{position:absolute;top:6px;right:6px;background:var(--accent);color:#000;padding:2px 7px;border-radius:8px;font-size:.6rem;font-weight:bold}
+.game-card .feat-badge{position:absolute;top:6px;left:6px;background:var(--warn);color:#000;padding:2px 7px;border-radius:8px;font-size:.6rem;font-weight:bold}
+.game-card .price-badge{position:absolute;bottom:6px;right:6px;background:var(--success);color:#fff;padding:2px 7px;border-radius:8px;font-size:.6rem;font-weight:bold}
+.game-card img{width:100%;height:140px;object-fit:cover;background:var(--card2)}
+.game-card .info{padding:10px}
+.game-card .info h3{font-size:.85rem;margin-bottom:2px}
+.game-card .info .desc{font-size:.65rem;color:var(--text2);margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.game-card .info .meta{display:flex;gap:6px;font-size:.6rem;color:var(--text2);margin-bottom:5px;flex-wrap:wrap}
+.game-card .info .meta span{display:flex;align-items:center;gap:2px}
+.game-card .info .stars{font-size:.7rem;margin-bottom:5px}
+.game-card .info .stars i{color:#ffc107}
+.game-card .info .btns{display:flex;gap:4px}
+.game-card .info button{flex:1;padding:7px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:.75rem;transition:.2s}
+.btn-dl{background:var(--grad);color:#fff}
+.btn-req{background:var(--warn);color:#000}
+.btn-pending{background:var(--card2);color:var(--warn);cursor:default}
+.btn-delete{background:var(--danger);color:#fff}
+.btn-fav{background:transparent;border:1px solid var(--border);color:var(--text2);width:30px!important;flex:0!important}
+.btn-fav.faved{color:var(--danger);border-color:var(--danger)}
+.btn-admin-add{background:var(--grad);color:#fff;border:none;padding:8px 18px;border-radius:20px;font-weight:bold;cursor:pointer;font-size:.8rem}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:200;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:92%;max-width:500px;max-height:88vh;overflow-y:auto}
+.modal h2{color:var(--accent);margin-bottom:12px;font-size:1rem}
+.modal input,.modal select,.modal textarea{width:100%;padding:8px 10px;margin-bottom:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.8rem}
+.modal textarea{height:60px;resize:vertical}
+.modal .img-preview{width:100%;height:90px;background:var(--card2);border:2px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden}
+.modal .img-preview img{max-height:100%;max-width:100%;object-fit:contain}
+.modal .img-preview .placeholder{color:var(--text2);font-size:.7rem}
+.modal .btn-row{display:flex;gap:6px;margin-top:6px}
+.modal .btn-row button{flex:1;padding:8px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:.8rem}
+.btn-cancel{background:var(--card2);color:var(--text)}
+.btn-save{background:var(--grad);color:#fff}
+.ann-card{background:var(--card);border:1px solid var(--accent);border-radius:var(--radius);padding:12px;margin-bottom:8px;border-left:4px solid var(--accent)}
+.ann-card h4{color:var(--accent);font-size:.85rem;margin-bottom:3px}
+.ann-card p{font-size:.75rem;color:var(--text2)}
+.comments-section{margin-top:14px;background:var(--card);border-radius:var(--radius);padding:12px;border:1px solid var(--border)}
+.comments-section h3{font-size:.9rem;margin-bottom:10px;color:var(--accent)}
+.comment{display:flex;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.comment:last-child{border-bottom:none}
+.comment .avatar{width:28px;height:28px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#fff;flex-shrink:0}
+.comment .c-body{flex:1}
+.comment .c-body .name{font-size:.75rem;font-weight:bold;color:var(--accent)}
+.comment .c-body .text{font-size:.75rem;margin-top:1px}
+.comment .c-body .c-meta{font-size:.6rem;color:var(--text2);margin-top:3px;display:flex;gap:10px}
+.comment .c-body .c-meta span{cursor:pointer}
+.comment .c-body .c-meta span:hover{color:var(--accent)}
+.comment-input{display:flex;gap:6px;margin-top:10px}
+.comment-input input{flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:16px;font-size:.75rem}
+.comment-input button{padding:7px 12px;background:var(--grad);color:#fff;border:none;border-radius:16px;cursor:pointer;font-size:.75rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:18px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-card .num{font-size:1.4rem;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-card .label{font-size:.65rem;color:var(--text2);margin-top:2px}
+.admin-section{margin-bottom:20px}
+.admin-section h3{color:var(--accent);margin-bottom:8px;font-size:.9rem;border-bottom:1px solid var(--border);padding-bottom:5px}
+.request-list{display:flex;flex-direction:column;gap:6px}
+.request-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.request-item .req-info{flex:1;min-width:120px}
+.request-item .req-info h4{font-size:.85rem}
+.request-item .req-info p{font-size:.7rem;color:var(--text2);margin-top:1px}
+.request-item .req-actions{display:flex;gap:4px}
+.request-item .req-actions button{padding:5px 10px;border:none;border-radius:5px;font-weight:bold;cursor:pointer;font-size:.7rem}
+.btn-approve{background:var(--success);color:#fff}
+.btn-reject{background:var(--danger);color:#fff}
+.user-manage{display:flex;gap:6px;margin-bottom:12px}
+.user-manage input{flex:1;padding:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.8rem}
+.user-manage button{padding:8px 14px;background:var(--grad);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:.75rem}
+.user-list{display:flex;flex-direction:column;gap:5px}
+.user-item{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.user-item span{font-size:.8rem}
+.role-tag{font-size:.6rem;padding:2px 5px;border-radius:3px;margin-left:3px}
+.role-owner{background:var(--danger);color:#fff}
+.role-admin{background:var(--accent);color:#000}
+.role-user{background:var(--card2);color:var(--text2)}
+.user-item button{padding:3px 7px;border:none;border-radius:3px;cursor:pointer;font-size:.65rem}
+.btn-make-admin{background:var(--accent);color:#000}
+.btn-remove-admin{background:var(--danger);color:#fff}
+.btn-remove-user{background:var(--card2);color:var(--text2);margin-left:2px}
+.chat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);height:400px;display:flex;flex-direction:column;max-width:600px}
+.chat-messages{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:5px}
+.chat-msg{background:var(--card2);padding:6px 8px;border-radius:8px;max-width:80%;animation:slideIn .2s}
+.chat-msg .name{font-size:.65rem;font-weight:bold;color:var(--accent)}
+.chat-msg .text{font-size:.75rem;margin-top:1px}
+.chat-msg .time{font-size:.55rem;color:var(--text2);margin-top:1px}
+.chat-msg.mine{align-self:flex-end;background:var(--accent);color:#000}
+.chat-msg.mine .name{color:#000}.chat-msg.mine .time{color:#333}
+.typing-indicator{font-size:.65rem;color:var(--text2);padding:3px 8px;font-style:italic}
+.chat-input{display:flex;gap:5px;padding:8px;border-top:1px solid var(--border)}
+.chat-input input{flex:1;padding:6px 10px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:16px;font-size:.75rem}
+.chat-input button{padding:6px 12px;background:var(--grad);color:#fff;border:none;border-radius:16px;cursor:pointer}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;max-width:380px;margin:0 auto 14px}
+.profile-card .avatar{width:64px;height:64px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 8px;color:#fff;overflow:hidden}
+.profile-card h3{margin-bottom:2px;font-size:1rem}
+.profile-card p{color:var(--text2);font-size:.75rem}
+.profile-card .badges{display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.profile-card .badge-item{background:var(--card2);padding:2px 6px;border-radius:8px;font-size:.6rem;color:var(--accent);border:1px solid var(--accent)}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.shop-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:.2s}
+.shop-item:hover{border-color:var(--accent)}
+.shop-item .icon{font-size:1.8rem;margin-bottom:6px}
+.shop-item .name{font-size:.8rem;font-weight:bold;margin-bottom:4px}
+.shop-item .price{font-size:.7rem;color:var(--warn)}
+.shop-item button{margin-top:6px;padding:5px 12px;background:var(--grad);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.7rem;font-weight:bold}
+.leaderboard{max-width:400px}
+.lb-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:5px}
+.lb-item .rank{font-size:1.2rem;font-weight:900;width:30px;text-align:center}
+.lb-item .rank.gold{color:#ffc107}
+.lb-item .rank.silver{color:#c0c0c0}
+.lb-item .rank.bronze{color:#cd7f32}
+.lb-item .info{flex:1}
+.lb-item .info .name{font-size:.85rem;font-weight:bold}
+.lb-item .info .detail{font-size:.65rem;color:var(--text2)}
+.events-section{margin-bottom:20px}
+.event-card{background:var(--card);border:1px solid var(--warn);border-radius:var(--radius);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.event-card .info h4{color:var(--warn);font-size:.85rem}
+.event-card .info p{font-size:.7rem;color:var(--text2)}
+.event-card button{padding:5px 12px;background:var(--warn);color:#000;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:.7rem}
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:6px 14px;background:var(--card);border:1px solid var(--border);color:var(--text2);border-radius:16px;cursor:pointer;font-size:.75rem;transition:.2s}
+.tab:hover,.tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.poll-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.poll-card h4{font-size:.9rem;margin-bottom:10px}
+.poll-option{margin-bottom:6px;position:relative;height:28px;background:var(--card2);border-radius:6px;overflow:hidden;cursor:pointer}
+.poll-option .fill{height:100%;background:var(--grad);border-radius:6px;transition:width .5s;display:flex;align-items:center;padding:0 10px;font-size:.75rem;font-weight:bold}
+.poll-option:hover .fill{opacity:.8}
+.empty{color:var(--text2);text-align:center;padding:16px;font-size:.8rem}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--grad);color:#fff;padding:8px 16px;border-radius:10px;font-weight:bold;font-size:.8rem;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,240,255,.3)}
+.toast.show{opacity:1}
+@media(max-width:600px){.topbar{flex-direction:column;gap:4px}.topbar nav{justify-content:center}.games-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1 onclick="showMain()"><i class="fas fa-gamepad"></i> G&B</h1>
+  <nav id="nav"></nav>
+</div>
+
+<div class="screen active" id="screen-signin">
+  <div class="auth-box">
+    <h2><i class="fas fa-sign-in-alt"></i> Sign In</h2>
+    <div class="error" id="signin-error"></div>
+    <input type="text" id="signin-user" placeholder="Username">
+    <input type="password" id="signin-pass" placeholder="Password">
+    <button class="btn" onclick="signIn()">Sign In</button>
+    <p>No account? <a onclick="showScreen('screen-signup')">Sign Up</a></p>
+  </div>
+</div>
+
+<div class="screen" id="screen-signup">
+  <div class="auth-box">
+    <h2><i class="fas fa-user-plus"></i> Sign Up</h2>
+    <div class="error" id="signup-error"></div>
+    <input type="text" id="signup-realname" placeholder="Real name">
+    <input type="text" id="signup-user" placeholder="Username">
+    <input type="password" id="signup-pass" placeholder="Password">
+    <input type="password" id="signup-pass2" placeholder="Confirm password">
+    <button class="btn" onclick="signUp()">Create Account</button>
+    <p>Have account? <a onclick="showScreen('screen-signin')">Sign In</a></p>
+  </div>
+</div>
+
+<div class="page" id="page-games">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:6px">
+    <h2><i class="fas fa-gamepad"></i> All Games</h2>
+    <div style="display:flex;gap:6px">
+      <button class="btn-admin-add" id="btn-add-game" style="display:none" onclick="openModal()"><i class="fas fa-plus"></i> Add</button>
+    </div>
+  </div>
+  <div id="ann-top"></div>
+  <div id="featured-section" class="featured-section" style="display:none"><h3><i class="fas fa-star"></i> Featured</h3><div class="featured-scroll" id="featured-scroll"></div></div>
+  <div class="toolbar">
+    <input type="text" class="search-box" id="search-box" placeholder="Search..." oninput="renderGames()">
+    <select class="sort-select" id="sort-select" onchange="renderGames()"><option value="newest">Newest</option><option value="popular">Popular</option><option value="rated">Top Rated</option><option value="az">A-Z</option></select>
+    <button class="filter-btn active" onclick="filterCat(this,'all')">All</button>
+    <button class="filter-btn" onclick="filterCat(this,'Action')">Action</button>
+    <button class="filter-btn" onclick="filterCat(this,'Puzzle')">Puzzle</button>
+    <button class="filter-btn" onclick="filterCat(this,'Racing')">Racing</button>
+    <button class="filter-btn" onclick="filterCat(this,'Horror')">Horror</button>
+    <button class="filter-btn" onclick="filterCat(this,'RPG')">RPG</button>
+    <button class="filter-btn" onclick="filterCat(this,'Shooter')">Shooter</button>
+  </div>
+  <div class="games-grid" id="games-grid"></div>
+</div>
+
+<div class="page" id="page-admin">
+  <h2><i class="fas fa-shield-alt"></i> Admin Panel</h2>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="tabs"><div class="tab active" onclick="showAdminTab(this,'tab-users')">Users</div><div class="tab" onclick="showAdminTab(this,'tab-requests')">Requests</div><div class="tab" onclick="showAdminTab(this,'tab-content')">Content</div><div class="tab" onclick="showAdminTab(this,'tab-settings')">Settings</div></div>
+  <div id="tab-users" class="admin-tab"><div class="admin-section"><h3>Manage Users</h3><div class="user-manage"><input type="text" id="admin-username-input" placeholder="Username"><button onclick="makeAdmin()">Make Admin</button></div><div class="user-list" id="user-list"></div></div></div>
+  <div id="tab-requests" class="admin-tab" style="display:none"><div class="admin-section"><h3>Game Requests</h3><div class="request-list" id="request-list"></div></div><div class="admin-section"><h3>Download Requests</h3><div class="request-list" id="download-requests"></div></div><div class="admin-section"><h3>Reports</h3><div class="request-list" id="reports-list"></div></div></div>
+  <div id="tab-content" class="admin-tab" style="display:none"><div class="admin-section"><h3>Announcements</h3><div class="user-manage"><input type="text" id="ann-title" placeholder="Title"><input type="text" id="ann-msg" placeholder="Message" style="flex:2"><button onclick="postAnnouncement()">Post</button></div></div><div class="admin-section"><h3>Polls</h3><div class="user-manage"><input type="text" id="poll-question" placeholder="Question"><input type="text" id="poll-options" placeholder="Options (comma separated)" style="flex:2"><button onclick="createPoll()">Create</button></div></div><div class="admin-section"><h3>Changelogs</h3><div class="user-manage"><input type="text" id="cl-version" placeholder="Version"><input type="text" id="cl-changes" placeholder="Changes" style="flex:2"><button onclick="postChangelog()">Post</button></div></div><div class="admin-section"><h3>Events</h3><div class="user-manage"><input type="text" id="ev-title" placeholder="Title"><input type="text" id="ev-desc" placeholder="Description"><input type="text" id="ev-reward" placeholder="Reward (coins)"><button onclick="postEvent()">Create</button></div></div></div>
+  <div id="tab-settings" class="admin-tab" style="display:none"><div class="admin-section"><h3>Settings</h3><button class="btn-req" onclick="toggleMaintenance()" id="maint-btn" style="padding:7px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:bold">Maintenance Mode</button></div></div>
+</div>
+
+<div class="page" id="page-myrequests"><h2><i class="fas fa-list"></i> My Requests</h2><div class="request-list" id="my-requests-list"></div></div>
+
+<div class="page" id="page-requestgame">
+  <h2><i class="fas fa-plus-circle"></i> Request a Game</h2>
+  <div class="auth-box" style="max-width:480px">
+    <input type="text" id="req-game-name" placeholder="Game name">
+    <input type="text" id="req-game-desc" placeholder="Why you want it">
+    <input type="text" id="req-location" placeholder="Your location in school">
+    <button class="btn" onclick="submitGameRequest()">Submit</button>
+  </div>
+  <div style="margin-top:16px"><h3 style="color:var(--text2);font-size:.9rem;margin-bottom:8px">Your Requests</h3><div class="request-list" id="user-past-requests"></div></div>
+</div>
+
+<div class="page" id="page-chat">
+  <h2><i class="fas fa-comments"></i> Chat</h2>
+  <div class="chat-box"><div class="chat-messages" id="chat-messages"></div><div class="typing-indicator" id="typing-indicator"></div><div class="chat-input"><input type="text" id="chat-input" placeholder="Message..." onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>
+</div>
+
+<div class="page" id="page-favorites"><h2><i class="fas fa-heart"></i> Favorites</h2><div class="games-grid" id="fav-grid"></div></div>
+
+<div class="page" id="page-leaderboard"><h2><i class="fas fa-trophy"></i> Leaderboard</h2><div class="leaderboard" id="lb-list"></div></div>
+
+<div class="page" id="page-shop">
+  <h2><i class="fas fa-store"></i> Shop</h2>
+  <p style="color:var(--text2);font-size:.8rem;margin-bottom:14px">Your coins: <b id="shop-coins" style="color:var(--warn)">0</b></p>
+  <div class="shop-grid" id="shop-grid"></div>
+</div>
+
+<div class="page" id="page-profile">
+  <h2><i class="fas fa-user"></i> Profile</h2>
+  <div class="profile-card" id="profile-card"></div>
+  <div class="auth-box" style="max-width:380px;margin:0 auto 14px">
+    <input type="text" id="profile-avatar" placeholder="Avatar URL">
+    <input type="text" id="profile-bio" placeholder="Bio">
+    <input type="text" id="profile-title" placeholder="Title (from inventory)">
+    <div style="display:flex;gap:8px;margin:8px 0">
+      <label style="font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:4px"><input type="checkbox" id="pref-notif" checked> Notifs</label>
+      <label style="font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:4px"><input type="checkbox" id="pref-sound" checked> Sound</label>
+      <input type="color" id="pref-accent" value="#00f0ff" style="width:28px;height:22px;border:none;cursor:pointer">
+    </div>
+    <button class="btn" onclick="updateProfile()">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2><i class="fas fa-plus-circle"></i> Add Game</h2>
+    <input type="text" id="game-name" placeholder="Name *">
+    <textarea id="game-desc" placeholder="Description"></textarea>
+    <select id="game-category"><option>Action</option><option>Adventure</option><option>Puzzle</option><option>Racing</option><option>Sports</option><option>Horror</option><option>RPG</option><option>Shooter</option><option>Other</option></select>
+    <input type="text" id="game-developer" placeholder="Developer">
+    <input type="text" id="game-size" placeholder="Size (2.5GB)">
+    <input type="text" id="game-version" placeholder="Version">
+    <input type="text" id="game-release" placeholder="Release date">
+    <input type="text" id="game-tags" placeholder="Tags (comma sep)">
+    <input type="text" id="game-platform" placeholder="Platform (PC/Mobile/Both)">
+    <input type="text" id="game-age" placeholder="Age rating">
+    <input type="text" id="game-price" placeholder="Price (Free)">
+    <input type="text" id="game-trailer" placeholder="Trailer YouTube URL">
+    <div class="img-preview" id="img-preview"><span class="placeholder">Image URL</span></div>
+    <input type="text" id="game-img" placeholder="Cover image URL" oninput="previewImage()">
+    <input type="text" id="game-download-link" placeholder="Download link (hidden)">
+    <div style="font-size:.6rem;color:var(--text2);margin-bottom:8px">Link hidden. Only approved users get it.</div>
+    <div class="btn-row"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addGame()">Add</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="game-detail-modal">
+  <div class="modal" style="max-width:550px"><div id="game-detail-content"></div><div class="btn-row" style="margin-top:10px"><button class="btn-cancel" onclick="closeDetail()">Close</button></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const socket=io();
+let currentUser=null;
+let db={users:[],games:[],gameRequests:[],downloadRequests:[],notifications:[],ratings:[],chat:[],comments:[],reports:[],announcements:[],polls:[],changelogs:[],events:[],faqs:[],reviews:[],wishlist:[],collections:[]};
+let currentFilter='all';
+const saved=localStorage.getItem('gb_user');
+if(saved){try{currentUser=JSON.parse(saved);document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById('page-games').classList.add('active')}catch(e){}}
+socket.emit('get_db');
+socket.on('db_data',(data)=>{db=data;renderGames();renderAdmin();renderChat();renderAnnouncements();renderShop();renderLeaderboard()});
+if(currentUser){socket.emit('user_online',{username:currentUser.username});setInterval(()=>socket.emit('user_online',{username:currentUser.username}),30000)}
+socket.on('online_count',(data)=>{});
+socket.on('game_added',(g)=>{if(!db.games.find(x=>x.id===g.id))db.games.push(g);renderGames();renderAdmin()});
+socket.on('game_deleted',(id)=>{db.games=db.games.filter(g=>g.id!==id);db.ratings=db.ratings.filter(r=>r.gameId!==id);db.comments=db.comments.filter(c=>c.gameId!==id);renderGames();renderAdmin()});
+socket.on('game_updated',(g)=>{const i=db.games.findIndex(x=>x.id===g.id);if(i>=0)db.games[i]=g;renderGames()});
+socket.on('new_download_request',(r)=>{if(!db.downloadRequests.find(x=>x.id===r.id))db.downloadRequests.push(r);renderAdmin();renderMyRequests()});
+socket.on('new_game_request',(r)=>{if(!db.gameRequests.find(x=>x.id===r.id))db.gameRequests.push(r);renderAdmin()});
+socket.on('download_updated',({id,status})=>{const r=db.downloadRequests.find(x=>x.id===id);if(r)r.status=status;renderGames();renderAdmin();renderMyRequests()});
+socket.on('game_request_updated',({id,status})=>{const r=db.gameRequests.find(x=>x.id===id);if(r)r.status=status;renderAdmin()});
+socket.on('user_updated',({username,role})=>{const u=db.users.find(x=>x.username===username);if(u)u.role=role;renderAdmin()});
+socket.on('user_removed',(u)=>{db.users=db.users.filter(x=>x.username!==u);renderAdmin()});
+socket.on('new_notification',(n)=>{db.notifications.push(n);renderNav();if(currentUser&&(n.to===currentUser.username||(n.to==='admin'&&isAdmin())))toast(n.message)});
+socket.on('rating_updated',({gameId,avg,count})=>{const g=db.games.find(x=>x.id===gameId);if(g){g._avg=avg;g._count=count}renderGames()});
+socket.on('new_chat',(m)=>{db.chat.push(m);renderChat()});
+socket.on('profile_updated',({username,avatar,bio})=>{const u=db.users.find(x=>x.username===username);if(u){u.avatar=avatar;u.bio=bio}});
+socket.on('favorites_updated',({favorites})=>{if(currentUser){currentUser.favorites=favorites;localStorage.setItem('gb_user',JSON.stringify(currentUser))}renderGames()});
+socket.on('new_comment',(c)=>{db.comments.push(c)});
+socket.on('comment_liked',({commentId,likes})=>{const c=db.comments.find(x=>x.id===commentId);if(c)c.likes=likes});
+socket.on('new_review',(r)=>{db.reviews.push(r)});
+socket.on('review_helpful',({reviewId,helpful})=>{const r=db.reviews.find(x=>x.id===reviewId);if(r)r.helpful=helpful});
+socket.on('new_announcement',(a)=>{db.announcements.push(a);renderAnnouncements()});
+socket.on('new_poll',(p)=>{db.polls.push(p)});
+socket.on('poll_updated',(p)=>{const i=db.polls.findIndex(x=>x.id===p.id);if(i>=0)db.polls[i]=p});
+socket.on('new_changelog',(c)=>{db.changelogs.push(c)});
+socket.on('new_event',(e)=>{db.events.push(e)});
+socket.on('event_claimed',({eventId,coins,inventory})=>{if(currentUser){currentUser.coins=coins;currentUser.inventory=inventory;localStorage.setItem('gb_user',JSON.stringify(currentUser))}});
+socket.on('shop_result',(res)=>{if(res.error)return toast(res.error);if(currentUser){currentUser.coins=res.coins;currentUser.inventory=res.inventory;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderShop();renderProfile()}toast('Purchased!')});
+socket.on('use_item_result',(res)=>{if(res.ok&&currentUser){Object.assign(currentUser,res.user);localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();toast('Item used!')}});
+socket.on('maintenance_update',({enabled})=>{db.maintenance=enabled});
+socket.on('typing_update',({users})=>{const el=document.getElementById('typing-indicator');if(el)el.textContent=users.length?users.join(', ')+' typing...':''});
+
+function isAdmin(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='owner')}
+function showScreen(id){document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');renderNav()}
+function showMain(){document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById('page-games').classList.add('active');renderNav();renderGames()}
+function showPage(id){document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');renderNav();
+if(id==='page-admin')renderAdmin();if(id==='page-myrequests')renderMyRequests();if(id==='page-requestgame')renderUserPastRequests();if(id==='page-chat')renderChat();if(id==='page-profile')renderProfile();if(id==='page-favorites')renderFavorites();if(id==='page-leaderboard')renderLeaderboard();if(id==='page-shop')renderShop()}
+
+function renderNav(){
+const nav=document.getElementById('nav');if(!currentUser){nav.innerHTML='';return}
+const unread=db.notifications.filter(n=>!n.read&&(n.to===currentUser.username||(n.to==='admin'&&isAdmin()))).length;
+let h=`<span class="user-badge"><span class="online-dot"></span><b>${esc(currentUser.realName||currentUser.username)}</b></span>`;
+const pages=[['page-games','fa-gamepad'],['page-favorites','fa-heart'],['page-myrequests','fa-list'],['page-requestgame','fa-plus-circle'],['page-chat','fa-comments'],['page-leaderboard','fa-trophy'],['page-shop','fa-store'],['page-profile','fa-user']];
+pages.forEach(([p,ic])=>{h+=`<button onclick="showPage('${p}')" class="${document.getElementById(p)?.classList.contains('active')?'active':''}"><i class="fas ${ic}"></i></button>`});
+h+=`<button onclick="showNotifications()" style="position:relative"><i class="fas fa-bell"></i${unread?'<span class="notif-badge">'+unread+'</span>':''}</button>`;
+if(isAdmin())h+=`<button onclick="showPage('page-admin')"><i class="fas fa-shield-alt"></i></button>`;
+h+=`<button onclick="toggleTheme()"><i class="fas fa-${document.body.classList.contains('light')?'moon':'sun'}"></i></button>`;
+h+=`<button onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>`;
+nav.innerHTML=h}
+
+function signIn(){const u=document.getElementById('signin-user').value.trim(),p=document.getElementById('signin-pass').value;if(!u||!p){document.getElementById('signin-error').textContent='Fill all';return}socket.emit('signin',{username:u,password:p})}
+socket.on('signin_result',(res)=>{if(res.error){document.getElementById('signin-error').textContent=res.error;return}currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));socket.emit('user_online',{username:currentUser.username});document.getElementById('signin-error').textContent='';document.getElementById('signin-user').value='';document.getElementById('signin-pass').value='';socket.emit('get_db');showMain();toast('Welcome '+(currentUser.realName||currentUser.username)+'!')});
+function signUp(){const u=document.getElementById('signup-user').value.trim(),p=document.getElementById('signup-pass').value,p2=document.getElementById('signup-pass2').value,rn=document.getElementById('signup-realname').value.trim();if(!u||!p||!rn){document.getElementById('signup-error').textContent='Fill all';return}if(p!==p2){document.getElementById('signup-error').textContent='Mismatch';return}socket.emit('signup',{username:u,password:p,realName:rn})}
+socket.on('signup_result',(res)=>{if(res.error){document.getElementById('signup-error').textContent=res.error;return}currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));socket.emit('user_online',{username:currentUser.username});document.getElementById('signup-error').textContent='';['signup-realname','signup-user','signup-pass','signup-pass2'].forEach(id=>document.getElementById(id).value='');socket.emit('get_db');showMain();toast('Welcome '+currentUser.realName+'!')});
+function signOut(){currentUser=null;localStorage.removeItem('gb_user');showScreen('screen-signin')}
+function filterCat(btn,cat){currentFilter=cat;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGames()}
+function toggleTheme(){document.body.classList.toggle('light');localStorage.setItem('gb_theme',document.body.classList.contains('light')?'light':'dark')}
+if(localStorage.getItem('gb_theme')==='light')document.body.classList.add('light');
+
+function renderAnnouncements(){const anns=db.announcements.filter(a=>(Date.now()-a.time)<7*86400000);const el=document.getElementById('ann-top');if(!anns.length||!el){if(el)el.innerHTML='';return}el.innerHTML=anns.slice(0,3).reverse().map(a=>`<div class="ann-card"><h4>${esc(a.title)}</h4><p>${esc(a.message)}</p></div>`).join('')}
+
+function renderGames(){
+const grid=document.getElementById('games-grid');const addBtn=document.getElementById('btn-add-game');addBtn.style.display=isAdmin()?'block':'none';
+const search=(document.getElementById('search-box')?.value||'').toLowerCase();const sort=document.getElementById('sort-select')?.value||'newest';
+let games=db.games;
+if(currentFilter!=='all')games=games.filter(g=>g.category===currentFilter);
+if(search)games=games.filter(g=>g.name.toLowerCase().includes(search)||(g.description||'').toLowerCase().includes(search)||(g.developer||'').toLowerCase().includes(search)||(g.tags||[]).some(t=>t.toLowerCase().includes(search)));
+const featured=games.filter(g=>g.featured);const fs=document.getElementById('featured-section');const fsc=document.getElementById('featured-scroll');
+if(featured.length){fs.style.display='block';fsc.innerHTML=featured.map(g=>`<div class="featured-card" onclick="openDetail(${g.id})"><img src="${esc(g.img||'')}" onerror="this.style.background='var(--card2)'"><div class="info"><h3>${esc(g.name)}</h3><div style="font-size:.65rem;color:var(--text2)">${esc(g.description||'').substring(0,50)}...</div></div></div>`).join('')}else fs.style.display='none';
+if(sort==='newest')games.sort((a,b)=>b.id-a.id);else if(sort==='popular')games.sort((a,b)=>(b.downloads||0)-(a.downloads||0));else if(sort==='rated')games.sort((a,b)=>(getAvg(b.id))-(getAvg(a.id)));else if(sort==='az')games.sort((a,b)=>a.name.localeCompare(b.name));
+if(!games.length){grid.innerHTML=`<div class="empty">${db.games.length?'No matches':'No games'}</div>`;return}
+const favs=currentUser?.favorites||[];
+grid.innerHTML=games.map(g=>{
+const avg=getAvg(g.id);let btns='';
+if(isAdmin()){btns=`<button class="btn-dl" onclick="event.stopPropagation();requestLink(${g.id})"><i class="fas fa-download"></i></button><button class="btn-delete" onclick="event.stopPropagation();deleteGame(${g.id})"><i class="fas fa-trash"></i></button>`}
+else{const appr=db.downloadRequests.find(d=>d.game===g.name&&d.user===currentUser?.username&&d.status==='approved');
+if(appr)btns=`<button class="btn-dl" onclick="event.stopPropagation();requestLink(${g.id})"><i class="fas fa-download"></i></button>`;
+else{const pend=db.downloadRequests.find(d=>d.game===g.name&&d.user===currentUser?.username&&d.status==='pending');
+btns=pend?`<button class="btn-pending"><i class="fas fa-clock"></i></button>`:`<button class="btn-req" onclick="event.stopPropagation();requestDownload('${esc(g.name)}')"><i class="fas fa-hand-paper"></i></button>`}}
+return`<div class="game-card" onclick="openDetail(${g.id})">${g.featured?'<div class="feat-badge"><i class="fas fa-star"></i></div>':''}<div class="badge">${esc(g.category)}</div>${g.price&&g.price!=='Free'?`<div class="price-badge">${esc(g.price)}</div>`:''}<img src="${esc(g.img||'')}" onerror="this.style.background='var(--card2)'"><div class="info"><h3>${esc(g.name)}</h3><div class="desc">${esc(g.description||'')}</div><div class="meta"><span><i class="fas fa-download"></i>${g.downloads||0}</span>${g.size?'<span><i class="fas fa-hdd"></i>'+esc(g.size)+'</span>':''}${g.platform?'<span><i class="fas fa-desktop"></i>'+esc(g.platform)+'</span>':''}</div><div class="stars">${renderStars(avg)}</div><div class="btns">${btns}<button class="btn-fav ${favs.includes(g.id)?'faved':''}" onclick="event.stopPropagation();toggleFav(${g.id})"><i class="fas fa-heart"></i></button></div></div></div>`}).join('')}
+
+function getAvg(gid){const r=db.ratings.filter(x=>x.gameId===gid);return r.length?r.reduce((a,x)=>a+x.rating,0)/r.length:0}
+function renderStars(a){if(!a)return'';let s='';for(let i=1;i<=5;i++)s+=`<i class="fas fa-star" style="color:${i<=Math.round(a)?'#ffc107':'#333'}"></i>`;return s+` <span style="color:var(--text2);font-size:.6rem">(${a.toFixed(1)})</span>`}
+
+function openDetail(gid){
+const g=db.games.find(x=>x.id===gid);if(!g)return
+const avg=getAvg(gid);const comments=db.comments.filter(c=>c.gameId===gid);
+const reviews=db.reviews.filter(r=>r.gameId===gid);
+const userRating=db.ratings.find(r=>r.gameId===gid&&r.user===currentUser?.username);
+const trailerId=g.trailer?g.trailer.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([^&\s]+)/)?.[1]:null;
+document.getElementById('game-detail-content').innerHTML=`
+<h2>${esc(g.name)}</h2>
+${g.img?`<img src="${esc(g.img)}" style="width:100%;height:180px;object-fit:cover;border-radius:8px;margin:8px 0">`:''}
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;font-size:.75rem;color:var(--text2)">
+<span><i class="fas fa-tag"></i> ${esc(g.category)}</span>
+${g.developer?'<span><i class="fas fa-code"></i> '+esc(g.developer)+'</span>':''}
+${g.size?'<span><i class="fas fa-hdd"></i> '+esc(g.size)+'</span>':''}
+${g.version?'<span><i class="fas fa-code-branch"></i> v'+esc(g.version)+'</span>':''}
+${g.platform?'<span><i class="fas fa-desktop"></i> '+esc(g.platform)+'</span>':''}
+${g.ageRating?'<span><i class="fas fa-child"></i> '+esc(g.ageRating)+'</span>':''}
+${g.price?'<span><i class="fas fa-tag"></i> '+esc(g.price)+'</span>':''}
+<span><i class="fas fa-download"></i> ${g.downloads||0}</span>
+</div>
+<p style="font-size:.8rem;color:var(--text2);margin:8px 0">${esc(g.description||'')}</p>
+${g.tags&&g.tags.length?'<div style="margin:6px 0">'+g.tags.map(t=>'<span style="background:var(--card2);padding:2px 6px;border-radius:8px;font-size:.65rem;margin-right:3px;color:var(--accent)">'+esc(t)+'</span>').join('')+'</div>':''}
+${g.minReqs||g.maxReqs?'<div style="margin:8px 0;font-size:.75rem"><b style="color:var(--accent)">Reqs:</b> Min: '+esc(g.minReqs||'N/A')+' | Max: '+esc(g.maxReqs||'N/A')+'</div>':''}
+${trailerId?`<div style="margin:10px 0"><iframe width="100%" height="200" src="https://www.youtube.com/embed/${trailerId}" frameborder="0" allowfullscreen style="border-radius:8px"></iframe></div>`:''}
+<div style="margin:8px 0"><b style="color:var(--accent)">Rating:</b> ${renderStars(avg)}</div>
+<div style="margin:8px 0">${[1,2,3,4,5].map(r=>`<i class="fas fa-star" style="color:${userRating&&userRating.rating>=r?'#ffc107':'#333'};cursor:pointer;font-size:1.1rem" onclick="rateGame(${gid},${r})"></i>`).join('')}</div>
+${reviews.length?'<div style="margin:12px 0"><h3 style="color:var(--accent);font-size:.9rem;margin-bottom:8px">Reviews</h3>'+reviews.map(r=>`<div style="background:var(--card2);padding:8px;border-radius:6px;margin-bottom:6px"><div style="font-size:.75rem;font-weight:bold;color:var(--accent)">${esc(r.realName||r.user)} ${renderStars(r.rating)}</div><div style="font-size:.8rem;margin-top:2px">${esc(r.text)}</div><div style="font-size:.6rem;color:var(--text2);margin-top:3px"><span style="cursor:pointer" onclick="helpfulReview(${r.id})"><i class="fas fa-thumbs-up"></i> ${r.helpful||0}</span></div></div>`).join('')+'</div>':''}
+${currentUser?`<div style="margin:10px 0"><input type="text" id="review-title" placeholder="Review title" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;margin-bottom:4px"><textarea id="review-text" placeholder="Write a review..." style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;height:50px;resize:vertical"></textarea><button onclick="postReview(${gid})" style="margin-top:4px;padding:5px 12px;background:var(--grad);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem">Post Review</button></div>`:''}
+<div class="comments-section"><h3>Comments (${comments.length})</h3>
+${comments.map(c=>`<div class="comment"><div class="avatar">${(c.realName||c.user)[0].toUpperCase()}</div><div class="c-body"><div class="name">${esc(c.realName||c.user)} ${c.role==='owner'?'<i class="fas fa-crown" style="color:#ffc107"></i>':c.role==='admin'?'<i class="fas fa-shield-alt" style="color:var(--accent)"></i>':''}</div><div class="text">${esc(c.text)}</div><div class="c-meta"><span onclick="likeComment(${c.id})"><i class="fas fa-heart"></i> ${c.likes||0}</span><span>${new Date(c.time).toLocaleDateString()}</span></div></div></div>`).join('')}
+${currentUser?`<div class="comment-input"><input type="text" id="comment-input" placeholder="Comment..." onkeydown="if(event.key==='Enter')postComment(${gid})"><button onclick="postComment(${gid})"><i class="fas fa-paper-plane"></i></button></div>`:'<p style="font-size:.75rem;color:var(--text2)">Sign in to comment</p>'}
+</div>`;
+document.getElementById('game-detail-modal').classList.add('active');
+socket.emit('add_comment',{gameId:gid,text:'__view__',user:currentUser})}
+
+function closeDetail(){document.getElementById('game-detail-modal').classList.remove('active')}
+function postComment(gid){const inp=document.getElementById('comment-input');if(!inp||!inp.value.trim())return;socket.emit('add_comment',{gameId:gid,text:inp.value.trim(),user:currentUser});inp.value=''}
+function likeComment(cid){socket.emit('like_comment',{commentId:cid,user:currentUser})}
+function postReview(gid){const t=document.getElementById('review-title')?.value||'';const txt=document.getElementById('review-text')?.value||'';if(!txt.trim())return;socket.emit('add_review',{gameId:gid,title:t,text:txt,rating:5,user:currentUser});toast('Review posted!')}
+function helpfulReview(rid){socket.emit('helpful_review',{reviewId:rid,user:currentUser})}
+function toggleFav(gid){socket.emit('toggle_favorite',{gameId:gid,user:currentUser})}
+function rateGame(gid,r){socket.emit('rate_game',{gameId:gid,rating:r,user:currentUser});toast('Rated '+r+' stars')}
+function requestLink(gid){window.location.href='/download/'+gid+'?u='+encodeURIComponent(currentUser.username)}
+function deleteGame(id){if(!confirm('Delete?'))return;socket.emit('delete_game',{id,user:currentUser})}
+function requestDownload(game){const loc=prompt('Where are you in school?');if(!loc)return;socket.emit('request_download',{game,user:currentUser,location:loc});toast('Request sent!')}
+
+function openModal(){document.getElementById('modal-overlay').classList.add('active');['game-name','game-desc','game-img','game-download-link','game-developer','game-size','game-version','game-release','game-tags','game-platform','game-age','game-price','game-trailer'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});document.getElementById('game-category').value='Other';document.getElementById('img-preview').innerHTML='<span class="placeholder">Image URL</span>'}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('active')}
+function previewImage(){const url=document.getElementById('game-img').value.trim(),box=document.getElementById('img-preview');if(url)box.innerHTML=`<img src="${esc(url)}" onerror="this.parentElement.innerHTML='<span class=placeholder>Invalid</span>'">`;else box.innerHTML='<span class="placeholder">Image URL</span>'}
+function addGame(){const name=document.getElementById('game-name').value.trim();if(!name)return toast('Enter name');socket.emit('add_game',{name,img:document.getElementById('game-img').value.trim(),downloadLink:document.getElementById('game-download-link').value.trim(),description:document.getElementById('game-desc').value.trim(),category:document.getElementById('game-category').value,developer:document.getElementById('game-developer').value.trim(),size:document.getElementById('game-size').value.trim(),gameVersion:document.getElementById('game-version').value.trim(),releaseDate:document.getElementById('game-release').value.trim(),tags:document.getElementById('game-tags').value.split(',').map(t=>t.trim()).filter(Boolean),platform:document.getElementById('game-platform').value.trim(),ageRating:document.getElementById('game-age').value.trim(),price:document.getElementById('game-price').value.trim()||'Free',trailer:document.getElementById('game-trailer').value.trim(),user:currentUser})}
+socket.on('add_game_result',(res)=>{if(res.error)return toast(res.error);closeModal();toast('Game added!')});
+
+function showAdminTab(btn,id){document.querySelectorAll('.admin-tab').forEach(t=>t.style.display='none');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById(id).style.display='block'}
+function renderAdmin(){
+if(!isAdmin())return;
+document.getElementById('stats-grid').innerHTML=`<div class="stat-card"><div class="num">${db.users.length}</div><div class="label">Users</div></div><div class="stat-card"><div class="num">${db.games.length}</div><div class="label">Games</div></div><div class="stat-card"><div class="num">${db.downloadRequests.filter(r=>r.status==='pending').length}</div><div class="label">Pending</div></div><div class="stat-card"><div class="num">${db.chat.length}</div><div class="label">Messages</div></div><div class="stat-card"><div class="num">${db.ratings.length}</div><div class="label">Ratings</div></div><div class="stat-card"><div class="num">${db.reviews.length}</div><div class="label">Reviews</div></div>`;
+document.getElementById('user-list').innerHTML=db.users.map(u=>{let t=`<span class="role-tag role-${u.role}">${u.role}</span>`;let b='';if(u.username==='owner')return`<div class="user-item"><span><i class="fas fa-crown" style="color:#ffc107"></i> ${esc(u.username)} (${esc(u.realName||'')})${t}</span></div>`;if(u.role==='admin'&&currentUser.role==='owner')b=`<button class="btn-remove-admin" onclick="removeAdmin('${esc(u.username)}')">Demote</button>`;if(u.role==='user')b=`<button class="btn-make-admin" onclick="promoteAdmin('${esc(u.username)}')">Promote</button>`;b+=`<button class="btn-remove-user" onclick="removeUser('${esc(u.username)}')"><i class="fas fa-times"></i></button>`;return`<div class="user-item"><span>${esc(u.username)} (${esc(u.realName||'')})${t}</span><div>${b}</div></div>`}).join('');
+document.getElementById('request-list').innerHTML=db.gameRequests.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.gameName)}</h4><p>${esc(r.realName||r.user)} - ${esc(r.location||'')}</p></div><div class="req-actions"><button class="btn-approve" onclick="approveGameReq(${r.id})"><i class="fas fa-check"></i></button><button class="btn-reject" onclick="rejectGameReq(${r.id})"><i class="fas fa-times"></i></button></div></div>`).join('')||'<div class="empty">None</div>';
+document.getElementById('download-requests').innerHTML=db.downloadRequests.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.game)}</h4><p>${esc(r.realName||r.user)} - ${esc(r.location||'')}</p></div><div class="req-actions"><button class="btn-approve" onclick="approveDL(${r.id})"><i class="fas fa-check"></i></button><button class="btn-reject" onclick="rejectDL(${r.id})"><i class="fas fa-times"></i></button></div></div>`).join('')||'<div class="empty">None</div>';
+document.getElementById('reports-list').innerHTML=db.reports.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.reason)}</h4><p>By ${esc(r.reportedBy)}</p></div></div>`).join('')||'<div class="empty">None</div>';
+document.getElementById('maint-btn').textContent=db.maintenance?'Maintenance: ON':'Maintenance: OFF'}
+
+function makeAdmin(){const t=document.getElementById('admin-username-input').value.trim();if(!t)return;socket.emit('make_admin',{target:t,user:currentUser});document.getElementById('admin-username-input').value=''}
+socket.on('make_admin_result',(res)=>{if(res.error)toast(res.error);else toast('Done!')});
+function promoteAdmin(u){socket.emit('make_admin',{target:u,user:currentUser})}
+function removeAdmin(u){socket.emit('remove_admin',{target:u,user:currentUser})}
+function removeUser(u){if(!confirm('Remove '+u+'?'))return;socket.emit('remove_user',{target:u,user:currentUser})}
+function approveGameReq(id){socket.emit('approve_game_request',{id,user:currentUser})}
+function rejectGameReq(id){socket.emit('reject_game_request',{id,user:currentUser})}
+function approveDL(id){socket.emit('approve_download',{id,user:currentUser})}
+function rejectDL(id){socket.emit('reject_download',{id,user:currentUser})}
+function postAnnouncement(){const t=document.getElementById('ann-title').value.trim(),m=document.getElementById('ann-msg').value.trim();if(!t||!m)return;socket.emit('announcement',{title:t,message:m,user:currentUser});document.getElementById('ann-title').value='';document.getElementById('ann-msg').value=''}
+function createPoll(){const q=document.getElementById('poll-question').value.trim(),o=document.getElementById('poll-options').value.trim();if(!q||!o)return;socket.emit('create_poll',{question:q,options:o.split(',').map(x=>x.trim()).filter(Boolean),user:currentUser});document.getElementById('poll-question').value='';document.getElementById('poll-options').value=''}
+function postChangelog(){const v=document.getElementById('cl-version').value.trim(),c=document.getElementById('cl-changes').value.trim();if(!v||!c)return;socket.emit('add_changelog',{version:v,changes:c,user:currentUser});document.getElementById('cl-version').value='';document.getElementById('cl-changes').value=''}
+function postEvent(){const t=document.getElementById('ev-title').value.trim(),d=document.getElementById('ev-desc').value.trim(),r=document.getElementById('ev-reward').value.trim();if(!t)return;socket.emit('add_event',{title:t,description:d,reward:r,user:currentUser});document.getElementById('ev-title').value='';document.getElementById('ev-desc').value='';document.getElementById('ev-reward').value=''}
+function toggleMaintenance(){socket.emit('toggle_maintenance',{user:currentUser})}
+function votePoll(pid,opt){socket.emit('vote_poll',{pollId:pid,option:opt,user:currentUser})}
+function claimEvent(eid){socket.emit('claim_event',{eventId:eid,user:currentUser});toast('Claimed!')}
+
+function submitGameRequest(){const name=document.getElementById('req-game-name').value.trim(),desc=document.getElementById('req-game-desc').value.trim(),loc=document.getElementById('req-location').value.trim();if(!name)return toast('Enter name');if(!loc)return toast('Enter location');socket.emit('request_game',{gameName:name,desc,user:currentUser,location:loc});document.getElementById('req-game-name').value='';document.getElementById('req-game-desc').value='';document.getElementById('req-location').value='';toast('Submitted!')}
+function renderMyRequests(){if(!currentUser)return;document.getElementById('my-requests-list').innerHTML=db.downloadRequests.filter(r=>r.user===currentUser.username).map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.game)}</h4><p style="color:${r.status==='approved'?'var(--success)':r.status==='rejected'?'var(--danger)':'var(--warn)'};font-weight:bold;font-size:.8rem">${r.status.toUpperCase()}</p></div></div>`).join('')||'<div class="empty">None</div>'}
+function renderUserPastRequests(){if(!currentUser)return;document.getElementById('user-past-requests').innerHTML=db.gameRequests.filter(r=>r.user===currentUser.username).map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.gameName)}</h4><p style="color:${r.status==='approved'?'var(--success)':r.status==='rejected'?'var(--danger)':'var(--warn)'};font-weight:bold;font-size:.8rem">${r.status.toUpperCase()}</p></div></div>`).join('')||'<div class="empty">None</div>'}
+
+function renderNotifications(){if(!currentUser)return;const myN=db.notifications.filter(n=>n.to===currentUser.username||(n.to==='admin'&&isAdmin()));const el=document.getElementById('notif-list');if(el)el.innerHTML=myN.reverse().map(n=>`<div class="request-item" style="opacity:${n.read?.5:1}"><div class="req-info"><h4>${esc(n.message)}</h4><p>${new Date(n.time).toLocaleString()}</p></div></div>`).join('')||'<div class="empty">None</div>'}
+function showNotifications(){let p=document.getElementById('page-notifications');if(!p){p=document.createElement('div');p.className='page';p.id='page-notifications';p.innerHTML='<h2><i class="fas fa-bell"></i> Notifications</h2><div style="display:flex;gap:6px;margin-bottom:10px"><button class="btn-admin-add" onclick="markAllRead()">Mark read</button><button class="btn-admin-add" onclick="clearNotifs()">Clear</button></div><div class="request-list" id="notif-list"></div>';document.body.appendChild(p)}
+document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));p.classList.add('active');renderNav();renderNotifications()}
+function markAllRead(){socket.emit('mark_read',{user:currentUser.username});db.notifications.forEach(n=>{if(n.to===currentUser.username||(n.to==='admin'&&isAdmin()))n.read=true});renderNotifications();renderNav()}
+function clearNotifs(){socket.emit('clear_notifications',{user:currentUser.username});db.notifications=db.notifications.filter(n=>n.to!==currentUser.username&&!(n.to==='admin'&&isAdmin()));renderNotifications();renderNav()}
+
+function renderChat(){const el=document.getElementById('chat-messages');if(!el)return;el.innerHTML=db.chat.map(m=>{const mine=currentUser&&m.user===currentUser.username;const rc=m.role==='owner'?'color:#ffc107':m.role==='admin'?'color:var(--accent)':'';return`<div class="chat-msg ${mine?'mine':''}"><div class="name" style="${rc}">${esc(m.realName||m.user)}</div><div class="text">${esc(m.message)}</div><div class="time">${new Date(m.time).toLocaleTimeString()}</div></div>`}).join('');el.scrollTop=el.scrollHeight}
+function sendChat(){const inp=document.getElementById('chat-input');const msg=inp.value.trim();if(!msg||!currentUser)return;socket.emit('send_chat',{message:msg,user:currentUser});inp.value=''}
+document.getElementById('chat-input')?.addEventListener('input',()=>{if(currentUser)socket.emit('typing',{username:currentUser.username})});
+
+function renderFavorites(){if(!currentUser)return;const favs=currentUser.favorites||[];const grid=document.getElementById('fav-grid');const games=db.games.filter(g=>favs.includes(g.id));if(!games.length){grid.innerHTML='<div class="empty">No favorites</div>';return}
+grid.innerHTML=games.map(g=>{const avg=getAvg(g.id);return`<div class="game-card" onclick="openDetail(${g.id})"><div class="badge">${esc(g.category)}</div><img src="${esc(g.img||'')}" onerror="this.style.background='var(--card2)'"><div class="info"><h3>${esc(g.name)}</h3><div class="stars">${renderStars(avg)}</div><div class="btns"><button class="btn-dl" onclick="event.stopPropagation();requestLink(${g.id})"><i class="fas fa-download"></i></button><button class="btn-fav faved" onclick="event.stopPropagation();toggleFav(${g.id})"><i class="fas fa-heart"></i></button></div></div></div>`}).join('')}
+
+function renderLeaderboard(){const sorted=[...db.users].sort((a,b)=>(b.downloadHistory?.length||0)-(a.downloadHistory?.length||0)).slice(0,20);document.getElementById('lb-list').innerHTML=sorted.map((u,i)=>`<div class="lb-item"><div class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div><div class="info"><div class="name">${esc(u.realName||u.username)}</div><div class="detail">${u.downloadHistory?.length||0} downloads | ${u.badges?.length||0} badges</div></div><div style="font-size:.8rem;color:var(--accent);font-weight:bold">${u.downloadHistory?.length||0}</div></div>`).join('')}
+
+const shopItems=[{name:'Title: Pro Gamer',icon:'🏆',price:50,type:'title'},{name:'Title: Legend',icon:'👑',price:100,type:'title'},{name:'Title: VIP',icon:'💎',price:75,type:'title'},{name:'Title: OG',icon:'⭐',price:150,type:'title'},{name:'Color: Red Name',icon:'🔴',price:30,type:'color'},{name:'Color: Gold Name',icon:'🟡',price:40,type:'color'},{name:'Color: Green Name',icon:'🟢',price:35,type:'color'},{name:'Badge: Sparkle',icon:'✨',price:60,type:'badge'},{name:'Badge: Fire',icon:'🔥',price:60,type:'badge'},{name:'Badge: Lightning',icon:'⚡',price:60,type:'badge'}];
+function renderShop(){if(!currentUser)return;document.getElementById('shop-coins').textContent=currentUser.coins||0;const inv=currentUser.inventory||[];
+document.getElementById('shop-grid').innerHTML=shopItems.map(item=>{const owned=inv.includes(item.name);return`<div class="shop-item"><div class="icon">${item.icon}</div><div class="name">${item.name}</div><div class="price">${owned?'Owned':item.price+' coins'}</div>${owned?`<button onclick="useItem('${esc(item.name)}')">Use</button>`:`<button onclick="buyItem('${esc(item.name)}',${item.price})" ${(currentUser.coins||0)<item.price?'disabled style="opacity:.5"':''}>Buy</button>`}</div>`}).join('')}
+function buyItem(name,price){socket.emit('shop_buy',{item:name,price:price,user:currentUser})}
+function useItem(name){socket.emit('use_item',{item:name,user:currentUser})}
+
+function renderProfile(){if(!currentUser)return;const u=db.users.find(x=>x.username===currentUser.username)||currentUser;
+document.getElementById('profile-card').innerHTML=`
+<div class="avatar">${u.avatar?`<img src="${esc(u.avatar)}" style="width:64px;height:64px;border-radius:50%;object-fit:cover">`:(u.realName||u.username)[0].toUpperCase()}</div>
+<h3>${esc(u.title?u.title+' ':'')}${esc(u.realName||u.username)}</h3>
+<p>@${esc(u.username)} <span class="role-tag role-${u.role}">${u.role}</span></p>
+<p style="margin-top:3px">${u.coins||0} coins</p>
+${u.badges&&u.badges.length?'<div class="badges">'+u.badges.map(b=>'<div class="badge-item"><i class="fas fa-award"></i> '+esc(b)+'</div>').join('')+'</div>':''}
+${u.achievements&&u.achievements.length?'<div class="badges" style="margin-top:4px">'+u.achievements.map(a=>'<div class="badge-item" style="border-color:var(--warn);color:var(--warn)"><i class="fas fa-trophy"></i> '+esc(a)+'</div>').join('')+'</div>':''}
+<p style="margin-top:6px;font-size:.75rem">${esc(u.bio||'No bio')}</p>`;
+document.getElementById('profile-avatar').value=u.avatar||'';document.getElementById('profile-bio').value=u.bio||'';document.getElementById('profile-title').value=u.title||'';
+document.getElementById('pref-notif').checked=u.notifications!==false;document.getElementById('pref-sound').checked=u.soundNotif!==false;
+document.getElementById('pref-accent').value=u.accentColor||'#00f0ff'}
+
+function updateProfile(){socket.emit('update_profile',{user:currentUser,avatar:document.getElementById('profile-avatar').value.trim(),bio:document.getElementById('profile-bio').value.trim(),title:document.getElementById('profile-title').value.trim(),notifications:document.getElementById('pref-notif').checked,soundNotif:document.getElementById('pref-sound').checked,accentColor:document.getElementById('pref-accent').value});toast('Saved!')}
+socket.on('update_profile_result',(res)=>{if(res.ok){currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();renderNav()}});
+
+document.addEventListener('keydown',(e)=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+if(e.key==='g')showMain();if(e.key==='f')showPage('page-favorites');if(e.key==='c')showPage('page-chat');if(e.key==='l')showPage('page-leaderboard');if(e.key==='s')showPage('page-shop');if(e.key==='p')showPage('page-profile');if(e.key==='n')showNotifications();if(e.key==='t')toggleTheme();if(e.key==='a'&&isAdmin())showPage('page-admin')});
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+</script>
+</body>
+</html>
