@@ -185,6 +185,15 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 .empty{color:var(--text2);text-align:center;padding:16px;font-size:.8rem}
 .toast{position:fixed;bottom:16px;right:16px;background:var(--grad);color:#fff;padding:8px 16px;border-radius:10px;font-weight:bold;font-size:.8rem;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,240,255,.3)}
 .toast.show{opacity:1}
+.main-layout{display:flex;gap:16px;max-width:1200px;margin:0 auto}
+.main-content{flex:1;min-width:0}
+.sidebar{width:220px;flex-shrink:0}
+.ad-slot{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;min-height:250px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.ad-slot .ad-label{position:absolute;top:4px;left:8px;font-size:.5rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.ad-slot .ad-placeholder{color:var(--text2);font-size:.7rem;text-align:center;padding:20px}
+.ad-slot .ad-placeholder i{font-size:1.5rem;margin-bottom:6px;display:block;color:var(--accent);opacity:.4}
+.ad-slot-300{min-height:600px}
+@media(max-width:900px){.sidebar{display:none}.main-layout{display:block}}
 @media(max-width:600px){.topbar{flex-direction:column;gap:4px}.topbar nav{justify-content:center}.games-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -219,26 +228,63 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 </div>
 
 <div class="page" id="page-games">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:6px">
-    <h2><i class="fas fa-gamepad"></i> All Games</h2>
-    <div style="display:flex;gap:6px">
-      <button class="btn-admin-add" id="btn-add-game" style="display:none" onclick="openModal()"><i class="fas fa-plus"></i> Add</button>
+  <div class="main-layout">
+    <div class="sidebar" id="sidebar-left">
+      <div class="ad-slot ad-slot-300">
+        <span class="ad-label">Ad</span>
+        <div class="ad-placeholder" id="ad-slot-left">
+          <i class="fas fa-ad"></i>
+          Ad Space 300x600<br>Paste your ad code here
+        </div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:6px">
+        <h2><i class="fas fa-gamepad"></i> All Games</h2>
+        <div style="display:flex;gap:6px">
+          <button class="btn-admin-add" id="btn-add-game" style="display:none" onclick="openModal()"><i class="fas fa-plus"></i> Add</button>
+        </div>
+      </div>
+      <div id="ann-top"></div>
+      <div id="featured-section" class="featured-section" style="display:none"><h3><i class="fas fa-star"></i> Featured</h3><div class="featured-scroll" id="featured-scroll"></div></div>
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-box" placeholder="Search..." oninput="renderGames()">
+        <select class="sort-select" id="sort-select" onchange="renderGames()"><option value="newest">Newest</option><option value="popular">Popular</option><option value="rated">Top Rated</option><option value="az">A-Z</option></select>
+        <button class="filter-btn active" onclick="filterCat(this,'all')">All</button>
+        <button class="filter-btn" onclick="filterCat(this,'Action')">Action</button>
+        <button class="filter-btn" onclick="filterCat(this,'Puzzle')">Puzzle</button>
+        <button class="filter-btn" onclick="filterCat(this,'Racing')">Racing</button>
+        <button class="filter-btn" onclick="filterCat(this,'Horror')">Horror</button>
+        <button class="filter-btn" onclick="filterCat(this,'RPG')">RPG</button>
+        <button class="filter-btn" onclick="filterCat(this,'Shooter')">Shooter</button>
+      </div>
+      <div class="games-grid" id="games-grid"></div>
+      <div style="margin-top:20px">
+        <div class="ad-slot" style="min-height:90px">
+          <span class="ad-label">Ad</span>
+          <div class="ad-placeholder" id="ad-slot-bottom" style="padding:10px">
+            <i class="fas fa-ad"></i> Banner Ad 728x90 - Paste your ad code here
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar" id="sidebar-right">
+      <div class="ad-slot ad-slot-300">
+        <span class="ad-label">Ad</span>
+        <div class="ad-placeholder" id="ad-slot-right">
+          <i class="fas fa-ad"></i>
+          Ad Space 300x600<br>Paste your ad code here
+        </div>
+      </div>
+      <div class="ad-slot">
+        <span class="ad-label">Ad</span>
+        <div class="ad-placeholder" id="ad-slot-right2">
+          <i class="fas fa-ad"></i>
+          Ad Space 300x250<br>Paste your ad code here
+        </div>
+      </div>
     </div>
   </div>
-  <div id="ann-top"></div>
-  <div id="featured-section" class="featured-section" style="display:none"><h3><i class="fas fa-star"></i> Featured</h3><div class="featured-scroll" id="featured-scroll"></div></div>
-  <div class="toolbar">
-    <input type="text" class="search-box" id="search-box" placeholder="Search..." oninput="renderGames()">
-    <select class="sort-select" id="sort-select" onchange="renderGames()"><option value="newest">Newest</option><option value="popular">Popular</option><option value="rated">Top Rated</option><option value="az">A-Z</option></select>
-    <button class="filter-btn active" onclick="filterCat(this,'all')">All</button>
-    <button class="filter-btn" onclick="filterCat(this,'Action')">Action</button>
-    <button class="filter-btn" onclick="filterCat(this,'Puzzle')">Puzzle</button>
-    <button class="filter-btn" onclick="filterCat(this,'Racing')">Racing</button>
-    <button class="filter-btn" onclick="filterCat(this,'Horror')">Horror</button>
-    <button class="filter-btn" onclick="filterCat(this,'RPG')">RPG</button>
-    <button class="filter-btn" onclick="filterCat(this,'Shooter')">Shooter</button>
-  </div>
-  <div class="games-grid" id="games-grid"></div>
 </div>
 
 <div class="page" id="page-admin">
@@ -324,6 +370,7 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 
 <div class="toast" id="toast"></div>
 
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 <script>
 const socket=io();
 let currentUser=null;
@@ -540,6 +587,17 @@ if(e.key==='g')showMain();if(e.key==='f')showPage('page-favorites');if(e.key==='
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+function loadAds(){
+  try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}
+}
+function injectAd(containerId,type){
+  const el=document.getElementById(containerId);if(!el)return;
+  if(type==='banner')el.innerHTML='<div class="ad-slot" style="min-height:90px"><span class="ad-label">Ad</span><ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins></div>';
+  if(type==='sidebar')el.innerHTML='<div class="ad-slot ad-slot-300"><span class="ad-label">Ad</span><ins class="adsbygoogle" style="display:inline-block;width:300px;height:600px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins></div>';
+  if(type==='mobile')el.innerHTML='<div class="ad-slot" style="min-height:50px"><span class="ad-label">Ad</span><ins class="adsbygoogle" style="display:inline-block;width:320px;height:50px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins></div>';
+  loadAds();
+}
 </script>
 </body>
 </html>
