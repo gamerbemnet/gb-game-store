@@ -692,7 +692,44 @@ grid.innerHTML=games.map(g=>{const avg=getAvg(g.id);return`<div class="game-card
 
 function renderLeaderboard(){const sorted=[...db.users].sort((a,b)=>(b.downloadHistory?.length||0)-(a.downloadHistory?.length||0)).slice(0,20);document.getElementById('lb-list').innerHTML=sorted.map((u,i)=>`<div class="lb-item"><div class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div><div class="info"><div class="name">${esc(u.realName||u.username)}</div><div class="detail">${u.downloadHistory?.length||0} downloads | ${u.badges?.length||0} badges</div></div><div style="font-size:.8rem;color:var(--accent);font-weight:bold">${u.downloadHistory?.length||0}</div></div>`).join('')}
 
-const shopItems=[{name:'Title: Pro Gamer',icon:'🏆',price:50,type:'title'},{name:'Title: Legend',icon:'👑',price:100,type:'title'},{name:'Title: VIP',icon:'💎',price:75,type:'title'},{name:'Title: OG',icon:'⭐',price:150,type:'title'},{name:'Color: Red Name',icon:'🔴',price:30,type:'color'},{name:'Color: Gold Name',icon:'🟡',price:40,type:'color'},{name:'Color: Green Name',icon:'🟢',price:35,type:'color'},{name:'Badge: Sparkle',icon:'✨',price:60,type:'badge'},{name:'Badge: Fire',icon:'🔥',price:60,type:'badge'},{name:'Badge: Lightning',icon:'⚡',price:60,type:'badge'}];
+const shopItems=[
+{name:'Title: Pro Gamer',icon:'🏆',price:50,type:'title'},{name:'Title: Legend',icon:'👑',price:100,type:'title'},{name:'Title: VIP',icon:'💎',price:75,type:'title'},{name:'Title: OG',icon:'⭐',price:150,type:'title'},
+{name:'Title: Noob',icon:'🐣',price:10,type:'title'},{name:'Title: Beast',icon:'🦁',price:200,type:'title'},{name:'Title: God',icon:'⚡',price:300,type:'title'},{name:'Title: Legend 2',icon:'🌟',price:250,type:'title'},
+{name:'Title: Pro',icon:'🎮',price:80,type:'title'},{name:'Title: Master',icon:'🎯',price:120,type:'title'},{name:'Title: King',icon:'🤴',price:180,type:'title'},{name:'Title: Hero',icon:'🦸',price:90,type:'title'},
+{name:'Title: Shadow',icon:'🌑',price:160,type:'title'},{name:'Title: Storm',icon:'⛈️',price:140,type:'title'},{name:'Title: Phantom',icon:'👻',price:170,type:'title'},{name:'Title: Titan',icon:'🗿',price:220,type:'title'},
+{name:'Title: Sage',icon:'🧙',price:190,type:'title'},{name:'Title: Warrior',icon:'⚔️',price:130,type:'title'},{name:'Title: Dragon',icon:'🐉',price:350,type:'title'},{name:'Title: Phoenix',icon:'🔥',price:400,type:'title'},
+{name:'Title: Astronaut',icon:'🚀',price:280,type:'title'},{name:'Title: Hacker',icon:'💻',price:320,type:'title'},{name:'Title: Royal',icon:'🏰',price:260,type:'title'},{name:'Title: Ninja',icon:'🥷',price:240,type:'title'},
+{name:'Color: Red Name',icon:'🔴',price:30,type:'color'},{name:'Color: Gold Name',icon:'🟡',price:40,type:'color'},{name:'Color: Green Name',icon:'🟢',price:35,type:'color'},
+{name:'Color: Blue Name',icon:'🔵',price:32,type:'color'},{name:'Color: Purple Name',icon:'🟣',price:38,type:'color'},{name:'Color: Pink Name',icon:'🩷',price:36,type:'color'},
+{name:'Color: Orange Name',icon:'🟠',price:34,type:'color'},{name:'Color: Cyan Name',icon:'🩵',price:33,type:'color'},{name:'Color: White Name',icon:'⚪',price:28,type:'color'},{name:'Color: Rainbow Name',icon:'🌈',price:200,type:'color'},
+{name:'Badge: Sparkle',icon:'✨',price:60,type:'badge'},{name:'Badge: Fire',icon:'🔥',price:60,type:'badge'},{name:'Badge: Lightning',icon:'⚡',price:60,type:'badge'},
+{name:'Badge: Heart',icon:'❤️',price:55,type:'badge'},{name:'Badge: Star',icon:'⭐',price:50,type:'badge'},{name:'Badge: Diamond',icon:'💎',price:70,type:'badge'},
+{name:'Badge: Crown',icon:'👑',price:80,type:'badge'},{name:'Badge: Sword',icon:'⚔️',price:65,type:'badge'},{name:'Badge: Shield',icon:'🛡️',price:68,type:'badge'},
+{name:'Badge: Flame',icon:'🔥',price:62,type:'badge'},{name:'Badge: Skull',icon:'💀',price:75,type:'badge'},{name:'Badge: Moon',icon:'🌙',price:58,type:'badge'},
+{name:'Badge: Rocket',icon:'🚀',price:72,type:'badge'},{name:'Badge: Target',icon:'🎯',price:56,type:'badge'},{name:'Badge: Lightning 2',icon:'💫',price:64,type:'badge'},
+{name:'Badge: Ghost',icon:'👻',price:78,type:'badge'},{name:'Badge: Unicorn',icon:'🦄',price:85,type:'badge'},{name:'Badge: Alien',icon:'👽',price:82,type:'badge'},
+{name:'Badge: Gem',icon:'💠',price:73,type:'badge'},{name:'Badge: Crystal',icon:'🔮',price:77,type:'badge'},{name:'Badge: Comet',icon:'☄️',price:69,type:'badge'},
+{name:'Badge: Volcano',icon:'🌋',price:88,type:'badge'},{name:'Badge: Tornado',icon:'🌪️',price:86,type:'badge'},{name:'Badge: Ice',icon:'🧊',price:71,type:'badge'},
+{name:'Badge: Thunder',icon:'🌩️',price:79,type:'badge'},{name:'Badge: Rainbow',icon:'🌈',price:90,type:'badge'},{name:'Badge: Galaxy',icon:'🌌',price:95,type:'badge'},
+{name:'Badge: Supernova',icon:'💥',price:92,type:'badge'},{name:'Badge: Nebula',icon:'🪐',price:93,type:'badge'},{name:'Badge: Eclipse',icon:'🌘',price:89,type:'badge'},
+{name:'Badge: Zen',icon:'☯️',price:84,type:'badge'},{name:'Badge: Matrix',icon:'🟢',price:97,type:'badge'},{name:'Badge: Neon',icon:'💡',price:81,type:'badge'},
+{name:'Badge: Ancient',icon:'🏺',price:100,type:'badge'},{name:'Badge: Mythic',icon:'⚜️',price:110,type:'badge'},{name:'Badge: Eternal',icon:'♾️',price:120,type:'badge'},
+{name:'Badge: Inferno',icon:'🌋',price:98,type:'badge'},{name:'Badge: Glacier',icon:'🏔️',price:94,type:'badge'},{name:'Badge: Mirage',icon:'🏜️',price:96,type:'badge'},
+{name:'Badge: Quantum',icon:'⚛️',price:105,type:'badge'},{name:'Badge: Cyber',icon:'🤖',price:108,type:'badge'},{name:'Badge: Vortex',icon:'🌀',price:102,type:'badge'},
+{name:'Badge: Prism',icon:'🔷',price:101,type:'badge'},{name:'Badge: Pulsar',icon:'💫',price:103,type:'badge'},{name:'Badge: Zenith',icon:'🔝',price:115,type:'badge'},
+{name:'Title: Overlord',icon:'😈',price:500,type:'title'},{name:'Title: Conqueror',icon:'🏰',price:450,type:'title'},{name:'Title: Immortal',icon:'💀',price:600,type:'title'},
+{name:'Title: Destroyer',icon:'💣',price:480,type:'title'},{name:'Title: Ascended',icon:'👼',price:550,type:'title'},{name:'Title: Eternal',icon:'♾️',price:700,type:'title'},
+{name:'Title: Cosmic',icon:'🌌',price:420,type:'title'},{name:'Title: Void',icon:'🕳️',price:380,type:'title'},{name:'Title: Chaos',icon:'🌪️',price:360,type:'title'},
+{name:'Title: Alpha',icon:'🅰️',price:340,type:'title'},{name:'Title: Omega',icon:'Ω',price:390,type:'title'},{name:'Title: Prime',icon:'💠',price:310,type:'title'},
+{name:'Title: Savage',icon:'🐺',price:290,type:'title'},{name:'Title: Demonic',icon:'😈',price:470,type:'title'},{name:'Title: Angelic',icon:'😇',price:440,type:'title'},
+{name:'Title: Frost',icon:'❄️',price:270,type:'title'},{name:'Title: Blaze',icon:'🔥',price:285,type:'title'},{name:'Title: Eclipse',icon:'🌑',price:370,type:'title'},
+{name:'Title: Quantum',icon:'⚛️',price:520,type:'title'},{name:'Title: Neon',icon:'💡',price:330,type:'title'},{name:'Title: Cyber',icon:'🤖',price:350,type:'title'},
+{name:'Color: Rainbow 2',icon:'🌈',price:150,type:'color'},{name:'Color: Neon Green',icon:'💚',price:45,type:'color'},{name:'Color: Neon Blue',icon:'💙',price:45,type:'color'},
+{name:'Color: Neon Pink',icon:'💗',price:45,type:'color'},{name:'Color: Neon Purple',icon:'💜',price:48,type:'color'},{name:'Color: Neon Yellow',icon:'💛',price:42,type:'color'},
+{name:'Color: Crimson',icon:'🟥',price:50,type:'color'},{name:'Color: Sapphire',icon:'🔷',price:52,type:'color'},{name:'Color: Emerald',icon:'🟢',price:55,type:'color'},
+{name:'Color: Amber',icon:'🟧',price:47,type:'color'},{name:'Color: Silver',icon:'🩶',price:43,type:'color'},{name:'Color: Midnight',icon:'⬛',price:60,type:'color'},
+{name:'Color: Obsidian',icon:'🖤',price:65,type:'color'},{name:'Color: Iridescent',icon:'🌈',price:100,type:'color'}
+];
 function renderShop(){if(!currentUser)return;document.getElementById('shop-coins').textContent=currentUser.coins||0;const inv=currentUser.inventory||[];
 document.getElementById('shop-grid').innerHTML=shopItems.map(item=>{const owned=inv.includes(item.name);return`<div class="shop-item"><div class="icon">${item.icon}</div><div class="name">${item.name}</div><div class="price">${owned?'Owned':item.price+' coins'}</div>${owned?`<button onclick="useItem('${esc(item.name)}')">Use</button>`:`<button onclick="buyItem('${esc(item.name)}',${item.price})" ${(currentUser.coins||0)<item.price?'disabled style="opacity:.5"':''}>Buy</button>`}</div>`}).join('')}
 function buyItem(name,price){socket.emit('shop_buy',{item:name,price:price,user:currentUser})}

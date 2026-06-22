@@ -445,12 +445,19 @@ def handle_use(data):
     inv=u.get('inventory',[])
     if item not in inv:return
     inv.remove(item)
-    titles={'Title: Pro Gamer':'Pro Gamer','Title: Legend':'Legend','Title: VIP':'VIP','Title: OG':'OG','Color: Red Name':'#ff4466','Color: Gold Name':'#ffc107','Color: Green Name':'#00cc66'}
+    color_map={'Color: Red Name':'#ff4466','Color: Gold Name':'#ffc107','Color: Green Name':'#00cc66','Color: Blue Name':'#4488ff','Color: Purple Name':'#aa44ff','Color: Pink Name':'#ff66aa','Color: Orange Name':'#ff8800','Color: Cyan Name':'#00cccc','Color: White Name':'#ffffff','Color: Rainbow Name':'#ff00ff','Color: Rainbow 2':'#ff88ff','Color: Neon Green':'#00ff66','Color: Neon Blue':'#0088ff','Color: Neon Pink':'#ff44aa','Color: Neon Purple':'#aa00ff','Color: Neon Yellow':'#ffff00','Color: Crimson':'#dc143c','Color: Sapphire':'#0f52ba','Color: Emerald':'#50c878','Color: Amber':'#ffbf00','Color: Silver':'#c0c0c0','Color: Midnight':'#191970','Color: Obsidian':'#1a1a1a','Color: Iridescent':'#8888ff'}
+    title_map={'Title: Pro Gamer':'Pro Gamer','Title: Legend':'Legend','Title: VIP':'VIP','Title: OG':'OG','Title: Noob':'Noob','Title: Beast':'Beast','Title: God':'God','Title: Legend 2':'Legend 2','Title: Pro':'Pro','Title: Master':'Master','Title: King':'King','Title: Hero':'Hero','Title: Shadow':'Shadow','Title: Storm':'Storm','Title: Phantom':'Phantom','Title: Titan':'Titan','Title: Sage':'Sage','Title: Warrior':'Warrior','Title: Dragon':'Dragon','Title: Phoenix':'Phoenix','Title: Astronaut':'Astronaut','Title: Hacker':'Hacker','Title: Royal':'Royal','Title: Ninja':'Ninja','Title: Overlord':'Overlord','Title: Conqueror':'Conqueror','Title: Immortal':'Immortal','Title: Destroyer':'Destroyer','Title: Ascended':'Ascended','Title: Eternal':'Eternal','Title: Cosmic':'Cosmic','Title: Void':'Void','Title: Chaos':'Chaos','Title: Alpha':'Alpha','Title: Omega':'Omega','Title: Prime':'Prime','Title: Savage':'Savage','Title: Demonic':'Demonic','Title: Angelic':'Angelic','Title: Frost':'Frost','Title: Blaze':'Blaze','Title: Eclipse':'Eclipse','Title: Quantum':'Quantum','Title: Neon':'Neon','Title: Cyber':'Cyber'}
+    all_colors={**color_map}
+    all_titles={**title_map}
     update={'inventory':inv}
-    if item in titles:
-        val=titles[item]
-        if item.startswith('Title:'):update['title']=val
-        elif item.startswith('Color:'):update['accentColor']=val
+    if item.startswith('Color:') and item in all_colors:
+        update['accentColor']=all_colors[item]
+    elif item.startswith('Title:') and item in all_titles:
+        update['title']=all_titles[item]
+    elif item.startswith('Title:'):
+        update['title']=item.replace('Title: ','')
+    elif item.startswith('Color:'):
+        update['accentColor']='#00f0ff'
     db_update('users',{'username':user['username']},update)
     u=db_find_one('users',{'username':user['username']})
     emit('use_item_result',{'ok':True,'user':{'title':u.get('title',''),'accentColor':u.get('accentColor','#00f0ff'),'inventory':u.get('inventory',[]),'coins':u.get('coins',0)}})
