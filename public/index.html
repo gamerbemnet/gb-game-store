@@ -481,7 +481,7 @@ let db={users:[],games:[],gameRequests:[],downloadRequests:[],notifications:[],r
 let currentFilter='all';
 const saved=localStorage.getItem('gb_user');
 if(saved){try{currentUser=JSON.parse(saved);document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById('page-games').classList.add('active')}catch(e){}}
-if(!localStorage.getItem('gb_tos_agreed')){
+if(!localStorage.getItem('gb_tos_agreed')&&(!currentUser||!isAdmin())){
   document.getElementById('tos-popup').classList.add('show');
   const tosBody=document.querySelector('.tos-popup-body');
   const tosBtn=document.getElementById('tos-agree-btn');
