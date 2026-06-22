@@ -185,9 +185,11 @@ def index():return send_from_directory('public','index.html')
 @app.route('/ads.js')
 def proxy_ads():
     try:
-        r=http_requests.get('https://pl29836648.effectivecpmnetwork.com/78/c8/6f/78c86f69ec008d2f9b114aa9d0e152fe.js',timeout=15)
+        r=http_requests.get('https://pl29836648.effectivecpmnetwork.com/78/c8/6f/78c86f69ec008d2f9b114aa9d0e152fe.js',timeout=20,headers={'User-Agent':flask_request.headers.get('User-Agent',''),'Referer':flask_request.headers.get('Referer','')})
         return Response(r.content,mimetype='application/javascript',headers={'Cache-Control':'public, max-age=3600','Access-Control-Allow-Origin':'*','Content-Disposition':'inline'})
-    except: return '// failed to load',500
+    except Exception as e:
+        print(f'Ad proxy failed: {e}')
+        return '// ad unavailable',200
 
 @app.route('/download/<int:game_id>')
 def proxy_download(game_id):
@@ -582,6 +584,17 @@ def handle_remove_admin(data):
     if not user or user.get('role')!='owner':return
     db_update('users',{'username':target},{'role':'user'})
     socketio.emit('user_updated',{'username':target,'role':'user'})
+@socketio.on('promote_to_owner')
+def handle_promote_owner(data):
+    user=data.get('user');target=data.get('target','')
+    if not user or user.get('role')!='owner':emit('make_admin_result',{'error':'Owner only'});return
+    u=db_find_one('users',{'username':target})
+    if not u:emit('make_admin_result',{'error':'Not found'});return
+    if u['role']=='owner':emit('make_admin_result',{'error':'Already owner'});return
+    db_update('users',{'username':target},{'role':'owner'})
+    notif={'id':int(time.time()*1000),'to':target,'from':'owner','message':'You are now an OWNER!','read':False,'time':int(time.time()*1000),'type':'system'}
+    db_insert('notifications',notif)
+    socketio.emit('user_updated',{'username':target,'role':'owner'});socketio.emit('new_notification',notif);emit('make_admin_result',{'ok':True})
 @socketio.on('remove_user')
 def handle_remove_user(data):
     user=data.get('user');target=data.get('target','')

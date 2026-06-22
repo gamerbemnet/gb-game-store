@@ -469,29 +469,23 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
   </div>
 </div>
 
+<div id="ad-container"></div>
 <script src="/ads.js"></script>
 <script>
 (function(){
-  var testAd=document.createElement('div');
-  testAd.innerHTML='&nbsp;';
-  testAd.className='adsbox ad-banner';
-  testAd.style.cssText='position:absolute;top:-999px;left:-999px;width:300px;height:250px;';
-  document.body.appendChild(testAd);
   setTimeout(function(){
-    if(!testAd.offsetHeight||testAd.offsetHeight===0||testAd.clientHeight===0||getComputedStyle(testAd).display==='none'||getComputedStyle(testAd).visibility==='hidden'){
-      document.getElementById('adblock-banner').classList.add('show');
-    }
-    document.body.removeChild(testAd);
-  },200);
-
-  var bait=document.createElement('iframe');
-  bait.style.cssText='width:1px;height:1px;position:absolute;top:-999px;left:-999px;border:none;';
-  bait.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-  bait.onerror=function(){
-    document.getElementById('adblock-banner').classList.add('show');
-  };
-  document.body.appendChild(bait);
-  setTimeout(function(){try{document.body.removeChild(bait)}catch(e){}},1500);
+    var testAd=document.createElement('div');
+    testAd.innerHTML='&nbsp;';
+    testAd.className='adsbox ad-banner';
+    testAd.style.cssText='position:absolute;top:-999px;left:-999px;width:300px;height:250px;';
+    document.body.appendChild(testAd);
+    setTimeout(function(){
+      if(!testAd.offsetHeight||testAd.offsetHeight===0||testAd.clientHeight===0||getComputedStyle(testAd).display==='none'||getComputedStyle(testAd).visibility==='hidden'){
+        document.getElementById('adblock-banner').classList.add('show');
+      }
+      try{document.body.removeChild(testAd)}catch(e){}
+    },500);
+  },1500);
 })();
 </script>
 <script>
@@ -655,7 +649,7 @@ function showAdminTab(btn,id){document.querySelectorAll('.admin-tab').forEach(t=
 function renderAdmin(){
 if(!isAdmin())return;
 document.getElementById('stats-grid').innerHTML=`<div class="stat-card"><div class="num">${db.users.length}</div><div class="label">Users</div></div><div class="stat-card"><div class="num">${db.games.length}</div><div class="label">Games</div></div><div class="stat-card"><div class="num">${db.downloadRequests.filter(r=>r.status==='pending').length}</div><div class="label">Pending</div></div><div class="stat-card"><div class="num">${db.chat.length}</div><div class="label">Messages</div></div><div class="stat-card"><div class="num">${db.ratings.length}</div><div class="label">Ratings</div></div><div class="stat-card"><div class="num">${db.reviews.length}</div><div class="label">Reviews</div></div>`;
-document.getElementById('user-list').innerHTML=db.users.map(u=>{let t=`<span class="role-tag role-${u.role}">${u.role}</span>`;let b='';if(u.username==='owner')return`<div class="user-item"><span><i class="fas fa-crown" style="color:#ffc107"></i> ${esc(u.username)} (${esc(u.realName||'')})${t}</span></div>`;if(u.role==='admin'&&currentUser.role==='owner')b=`<button class="btn-remove-admin" onclick="removeAdmin('${esc(u.username)}')">Demote</button>`;if(u.role==='user')b=`<button class="btn-make-admin" onclick="promoteAdmin('${esc(u.username)}')">Promote</button>`;b+=`<button class="btn-remove-user" onclick="removeUser('${esc(u.username)}')"><i class="fas fa-times"></i></button>`;return`<div class="user-item"><span>${esc(u.username)} (${esc(u.realName||'')})${t}</span><div>${b}</div></div>`}).join('');
+document.getElementById('user-list').innerHTML=db.users.map(u=>{let t=`<span class="role-tag role-${u.role}">${u.role}</span>`;let b='';if(u.username==='owner')return`<div class="user-item"><span><i class="fas fa-crown" style="color:#ffc107"></i> ${esc(u.username)} (${esc(u.realName||'')})${t}</span></div>`;if(u.role==='admin'&&currentUser.role==='owner')b=`<button class="btn-remove-admin" onclick="removeAdmin('${esc(u.username)}')">Demote</button><button class="btn-make-admin" onclick="promoteToOwner('${esc(u.username)}')" style="background:#ffc107;color:#000">Make Owner</button>`;if(u.role==='user')b=`<button class="btn-make-admin" onclick="promoteAdmin('${esc(u.username)}')">Promote</button>`;b+=`<button class="btn-remove-user" onclick="removeUser('${esc(u.username)}')"><i class="fas fa-times"></i></button>`;return`<div class="user-item"><span>${esc(u.username)} (${esc(u.realName||'')})${t}</span><div>${b}</div></div>`}).join('');
 document.getElementById('request-list').innerHTML=db.gameRequests.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.gameName)}</h4><p>${esc(r.realName||r.user)} - ${esc(r.location||'')}</p></div><div class="req-actions"><button class="btn-approve" onclick="approveGameReq(${r.id})"><i class="fas fa-check"></i></button><button class="btn-reject" onclick="rejectGameReq(${r.id})"><i class="fas fa-times"></i></button></div></div>`).join('')||'<div class="empty">None</div>';
 document.getElementById('download-requests').innerHTML=db.downloadRequests.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.game)}</h4><p>${esc(r.realName||r.user)} - ${esc(r.location||'')}</p></div><div class="req-actions"><button class="btn-approve" onclick="approveDL(${r.id})"><i class="fas fa-check"></i></button><button class="btn-reject" onclick="rejectDL(${r.id})"><i class="fas fa-times"></i></button></div></div>`).join('')||'<div class="empty">None</div>';
 document.getElementById('reports-list').innerHTML=db.reports.filter(r=>r.status==='pending').map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.reason)}</h4><p>By ${esc(r.reportedBy)}</p></div></div>`).join('')||'<div class="empty">None</div>';
@@ -664,6 +658,7 @@ document.getElementById('maint-btn').textContent=db.maintenance?'Maintenance: ON
 function makeAdmin(){const t=document.getElementById('admin-username-input').value.trim();if(!t)return;socket.emit('make_admin',{target:t,user:currentUser});document.getElementById('admin-username-input').value=''}
 socket.on('make_admin_result',(res)=>{if(res.error)toast(res.error);else toast('Done!')});
 function promoteAdmin(u){socket.emit('make_admin',{target:u,user:currentUser})}
+function promoteToOwner(u){if(!confirm('Make '+u+' an OWNER? They will have full owner powers.'))return;socket.emit('promote_to_owner',{target:u,user:currentUser})}
 function removeAdmin(u){socket.emit('remove_admin',{target:u,user:currentUser})}
 function removeUser(u){if(!confirm('Remove '+u+'?'))return;socket.emit('remove_user',{target:u,user:currentUser})}
 function approveGameReq(id){socket.emit('approve_game_request',{id,user:currentUser})}
