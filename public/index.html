@@ -204,12 +204,23 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 .tos-page .tos-content .highlight{color:var(--danger);font-weight:bold}
 @media(max-width:900px){.sidebar{display:none}.main-layout{display:block}}
 @media(max-width:600px){.topbar{flex-direction:column;gap:4px}.topbar nav{justify-content:center}.games-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.adblock-banner{display:none;background:linear-gradient(135deg,#ff0040,#ff6600);border:2px solid #ff0040;border-radius:12px;padding:16px 20px;margin:12px 0;text-align:center;animation:fadeIn .5s}
+.adblock-banner.show{display:block}
+.adblock-banner h3{color:#fff;font-size:1.1rem;font-weight:900;margin-bottom:6px}
+.adblock-banner p{color:#ffdd00;font-size:.85rem;font-weight:bold}
+.adblock-banner i{font-size:2rem;color:#fff;margin-bottom:8px;display:block}
 </style>
 </head>
 <body>
 <div class="topbar">
   <h1 onclick="showMain()"><i class="fas fa-gamepad"></i> G&B</h1>
   <nav id="nav"></nav>
+</div>
+
+<div class="adblock-banner" id="adblock-banner">
+  <i class="fas fa-shield-alt"></i>
+  <h3>AD BLOCKER DETECTED</h3>
+  <p>Please disable your ad blocker to support G&B Game Store. Ads help us keep this site free!</p>
 </div>
 
 <div class="screen active" id="screen-signin">
@@ -387,6 +398,30 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 <div class="toast" id="toast"></div>
 
 <script src="https://pl29836648.effectivecpmnetwork.com/78/c8/6f/78c86f69ec008d2f9b114aa9d0e152fe.js"></script>
+<script>
+(function(){
+  var testAd=document.createElement('div');
+  testAd.innerHTML='&nbsp;';
+  testAd.className='adsbox ad-banner';
+  testAd.style.cssText='position:absolute;top:-999px;left:-999px;width:300px;height:250px;';
+  document.body.appendChild(testAd);
+  setTimeout(function(){
+    if(!testAd.offsetHeight||testAd.offsetHeight===0||testAd.clientHeight===0||getComputedStyle(testAd).display==='none'||getComputedStyle(testAd).visibility==='hidden'){
+      document.getElementById('adblock-banner').classList.add('show');
+    }
+    document.body.removeChild(testAd);
+  },200);
+
+  var bait=document.createElement('iframe');
+  bait.style.cssText='width:1px;height:1px;position:absolute;top:-999px;left:-999px;border:none;';
+  bait.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+  bait.onerror=function(){
+    document.getElementById('adblock-banner').classList.add('show');
+  };
+  document.body.appendChild(bait);
+  setTimeout(function(){try{document.body.removeChild(bait)}catch(e){}},1500);
+})();
+</script>
 <script>
 const socket=io();
 let currentUser=null;
