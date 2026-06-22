@@ -20,6 +20,12 @@ def save_db(db):
 db=load_db()
 @app.route('/')
 def index():return send_from_directory('public','index.html')
+@app.route('/ads.js')
+def proxy_ads():
+    try:
+        r=http_requests.get('https://pl29836648.effectivecpmnetwork.com/78/c8/6f/78c86f69ec008d2f9b114aa9d0e152fe.js',timeout=15)
+        return Response(r.content,mimetype='application/javascript',headers={'Cache-Control':'public, max-age=3600','Access-Control-Allow-Origin':'*'})
+    except: return '// failed to load',500
 @app.route('/download/<int:game_id>')
 def proxy_download(game_id):
     auth_user=flask_request.args.get('u','')
