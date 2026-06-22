@@ -209,9 +209,61 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 .adblock-banner h3{color:#fff;font-size:1.1rem;font-weight:900;margin-bottom:6px}
 .adblock-banner p{color:#ffdd00;font-size:.85rem;font-weight:bold}
 .adblock-banner i{font-size:2rem;color:#fff;margin-bottom:8px;display:block}
+.tos-popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:9999;justify-content:center;align-items:center}
+.tos-popup-overlay.show{display:flex}
+.tos-popup{background:var(--card);border:2px solid #ff0040;border-radius:var(--radius);padding:0;width:92%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column}
+.tos-popup .tos-popup-banner{background:linear-gradient(135deg,#ff0040,#ff6600);padding:20px;text-align:center;flex-shrink:0}
+.tos-popup .tos-popup-banner h1{color:#fff;font-size:1.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.tos-popup .tos-popup-banner .fine{color:#ffdd00;font-size:1.1rem;font-weight:900;margin-top:8px}
+.tos-popup .tos-popup-body{padding:16px;overflow-y:auto;flex:1}
+.tos-popup .tos-popup-body h3{color:var(--accent);font-size:.85rem;margin:12px 0 6px}
+.tos-popup .tos-popup-body p,.tos-popup .tos-popup-body li{font-size:.75rem;color:var(--text2);line-height:1.5;margin-bottom:4px}
+.tos-popup .tos-popup-body ul{padding-left:16px}
+.tos-popup .tos-popup-body .hl{color:var(--danger);font-weight:bold}
+.tos-popup .tos-popup-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:center}
+.tos-popup .tos-popup-footer label{font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer}
+.tos-popup .tos-popup-footer label input{accent-color:var(--danger);width:16px;height:16px;cursor:pointer}
+.tos-popup .tos-popup-footer button{width:100%;padding:10px;background:linear-gradient(135deg,#ff0040,#ff6600);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:bold;cursor:pointer;transition:.2s}
+.tos-popup .tos-popup-footer button:hover{opacity:.9}
+.tos-popup .tos-popup-footer button:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
+<div class="tos-popup-overlay" id="tos-popup">
+  <div class="tos-popup">
+    <div class="tos-popup-banner">
+      <h1><i class="fas fa-exclamation-triangle"></i> TERMS OF SERVICE</h1>
+      <p style="color:#fff;font-size:.8rem;font-weight:bold">READ CAREFULLY BEFORE USING THIS SITE</p>
+      <div class="fine"><i class="fas fa-gavel"></i> $100 FINE PER GAME SHARED</div>
+    </div>
+    <div class="tos-popup-body">
+      <h3><i class="fas fa-ban"></i> NO FILE SHARING</h3>
+      <p>You are <span class="hl">STRICTLY PROHIBITED</span> from sharing, distributing, re-uploading, or transmitting any game files obtained from this platform to any third party.</p>
+      <p>This includes but is not limited to:</p>
+      <ul>
+        <li>Sharing download links with anyone</li>
+        <li>Uploading games to file-sharing sites</li>
+        <li>Sending games via email, chat, or social media</li>
+        <li>Selling, trading, or gifting downloaded game files</li>
+      </ul>
+      <h3><i class="fas fa-dollar-sign"></i> FINES & PENALTIES</h3>
+      <p><span class="hl">FIRST OFFENSE: $100 FINE per game file shared.</span></p>
+      <p><span class="hl">SECOND OFFENSE: Permanent ban + $200 FINE per game file shared.</span></p>
+      <p><span class="hl">THIRD OFFENSE: Legal action may be taken.</span></p>
+      <h3><i class="fas fa-user-shield"></i> ACCOUNT RESPONSIBILITY</h3>
+      <p>You are fully responsible for all activity on your account. Keep your credentials secure.</p>
+      <h3><i class="fas fa-download"></i> LICENSE</h3>
+      <p>Downloading a game grants you a <span class="hl">personal, non-transferable license</span> only. You do NOT own the game files and have NO right to distribute them.</p>
+      <h3><i class="fas fa-eye"></i> MONITORING</h3>
+      <p>G&B GAME STORE reserves the right to monitor download activity and investigate any suspected violations. All evidence of sharing is logged and timestamped.</p>
+    </div>
+    <div class="tos-popup-footer">
+      <label id="tos-remember-label"><input type="checkbox" id="tos-remember"> Don't show this again</label>
+      <button id="tos-agree-btn" onclick="agreeToS()" disabled>I HAVE READ & AGREE</button>
+    </div>
+  </div>
+</div>
+
 <div class="topbar">
   <h1 onclick="showMain()"><i class="fas fa-gamepad"></i> G&B</h1>
   <nav id="nav"></nav>
@@ -429,6 +481,16 @@ let db={users:[],games:[],gameRequests:[],downloadRequests:[],notifications:[],r
 let currentFilter='all';
 const saved=localStorage.getItem('gb_user');
 if(saved){try{currentUser=JSON.parse(saved);document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));document.getElementById('page-games').classList.add('active')}catch(e){}}
+if(!localStorage.getItem('gb_tos_agreed')){
+  document.getElementById('tos-popup').classList.add('show');
+  const tosBody=document.querySelector('.tos-popup-body');
+  const tosBtn=document.getElementById('tos-agree-btn');
+  tosBody.addEventListener('scroll',()=>{if(tosBody.scrollTop+tosBody.clientHeight>=tosBody.scrollHeight-10)tosBtn.disabled=false});
+}
+function agreeToS(){
+  if(document.getElementById('tos-remember').checked)localStorage.setItem('gb_tos_agreed','1');
+  document.getElementById('tos-popup').classList.remove('show');
+}
 socket.emit('get_db');
 socket.on('db_data',(data)=>{db=data;renderGames();renderAdmin();renderChat();renderAnnouncements();renderShop();renderLeaderboard()});
 if(currentUser){socket.emit('user_online',{username:currentUser.username});setInterval(()=>socket.emit('user_online',{username:currentUser.username}),30000)}
