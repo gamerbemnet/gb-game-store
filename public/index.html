@@ -376,6 +376,7 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
       <input type="color" id="pref-accent" value="#00f0ff" style="width:28px;height:22px;border:none;cursor:pointer">
     </div>
     <button class="btn" onclick="updateProfile()">Save</button>
+    <span id="autosave-status" style="font-size:.7rem;color:var(--text2);margin-left:8px;display:none"><i class="fas fa-check-circle" style="color:#00ff88"></i> Auto-saved</span>
   </div>
 </div>
 
@@ -699,8 +700,14 @@ document.getElementById('profile-avatar').value=u.avatar||'';document.getElement
 document.getElementById('pref-notif').checked=u.notifications!==false;document.getElementById('pref-sound').checked=u.soundNotif!==false;
 document.getElementById('pref-accent').value=u.accentColor||'#00f0ff'}
 
-function updateProfile(){socket.emit('update_profile',{user:currentUser,avatar:document.getElementById('profile-avatar').value.trim(),bio:document.getElementById('profile-bio').value.trim(),title:document.getElementById('profile-title').value.trim(),notifications:document.getElementById('pref-notif').checked,soundNotif:document.getElementById('pref-sound').checked,accentColor:document.getElementById('pref-accent').value});toast('Saved!')}
-socket.on('update_profile_result',(res)=>{if(res.ok){currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();renderNav()}});
+function updateProfile(showToast){socket.emit('update_profile',{user:currentUser,avatar:document.getElementById('profile-avatar').value.trim(),bio:document.getElementById('profile-bio').value.trim(),title:document.getElementById('profile-title').value.trim(),notifications:document.getElementById('pref-notif').checked,soundNotif:document.getElementById('pref-sound').checked,accentColor:document.getElementById('pref-accent').value});if(showToast)toast('Saved!')}
+socket.on('update_profile_result',(res)=>{if(res.ok){currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();renderNav();const s=document.getElementById('autosave-status');if(s){s.style.display='inline';setTimeout(()=>s.style.display='none',2000)}}});
+let _autoSaveTimer;
+function autoSave(){clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(()=>updateProfile(false),800)}
+document.addEventListener('DOMContentLoaded',()=>{
+['profile-avatar','profile-bio','profile-title'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',autoSave)});
+['pref-notif','pref-sound'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',autoSave)});
+const acc=document.getElementById('pref-accent');if(acc)acc.addEventListener('input',autoSave)});
 
 document.addEventListener('keydown',(e)=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
 if(e.key==='g')showMain();if(e.key==='f')showPage('page-favorites');if(e.key==='c')showPage('page-chat');if(e.key==='l')showPage('page-leaderboard');if(e.key==='s')showPage('page-shop');if(e.key==='p')showPage('page-profile');if(e.key==='n')showNotifications();if(e.key==='t')toggleTheme();if(e.key==='a'&&isAdmin())showPage('page-admin')});
