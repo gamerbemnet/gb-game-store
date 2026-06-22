@@ -316,11 +316,14 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
     <select class="sort-select" id="sort-select" onchange="renderGames()"><option value="newest">Newest</option><option value="popular">Popular</option><option value="rated">Top Rated</option><option value="az">A-Z</option></select>
     <button class="filter-btn active" onclick="filterCat(this,'all')">All</button>
     <button class="filter-btn" onclick="filterCat(this,'Action')">Action</button>
+    <button class="filter-btn" onclick="filterCat(this,'Adventure')">Adventure</button>
     <button class="filter-btn" onclick="filterCat(this,'Puzzle')">Puzzle</button>
     <button class="filter-btn" onclick="filterCat(this,'Racing')">Racing</button>
     <button class="filter-btn" onclick="filterCat(this,'Horror')">Horror</button>
     <button class="filter-btn" onclick="filterCat(this,'RPG')">RPG</button>
     <button class="filter-btn" onclick="filterCat(this,'Shooter')">Shooter</button>
+    <button class="filter-btn" onclick="filterCat(this,'Simulation')">Simulation</button>
+    <button class="filter-btn" onclick="filterCat(this,'Sports')">Sports</button>
   </div>
   <div class="games-grid" id="games-grid"></div>
 </div>
@@ -375,7 +378,7 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
       <label style="font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:4px"><input type="checkbox" id="pref-sound" checked> Sound</label>
       <input type="color" id="pref-accent" value="#00f0ff" style="width:28px;height:22px;border:none;cursor:pointer">
     </div>
-    <button class="btn" onclick="updateProfile()">Save</button>
+    <button class="btn" onclick="updateProfile(true)">Save</button>
     <span id="autosave-status" style="font-size:.7rem;color:var(--text2);margin-left:8px;display:none"><i class="fas fa-check-circle" style="color:#00ff88"></i> Auto-saved</span>
   </div>
 </div>
@@ -457,6 +460,15 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="dl-request-modal">
+  <div class="modal" style="max-width:380px">
+    <h2><i class="fas fa-hand-paper"></i> Request Download</h2>
+    <p style="font-size:.8rem;color:var(--text2);margin-bottom:8px">Where are you in school?</p>
+    <input type="text" id="dl-location" placeholder="e.g. Library, Room 204">
+    <div class="btn-row"><button class="btn-cancel" onclick="closeDlRequest()">Cancel</button><button class="btn-save" onclick="submitDlRequest()">Send Request</button></div>
+  </div>
+</div>
+
 <script src="/ads.js"></script>
 <script>
 (function(){
@@ -516,7 +528,7 @@ socket.on('new_notification',(n)=>{db.notifications.push(n);renderNav();if(curre
 socket.on('rating_updated',({gameId,avg,count})=>{const g=db.games.find(x=>x.id===gameId);if(g){g._avg=avg;g._count=count}renderGames()});
 socket.on('new_chat',(m)=>{db.chat.push(m);renderChat()});
 socket.on('profile_updated',({username,avatar,bio})=>{const u=db.users.find(x=>x.username===username);if(u){u.avatar=avatar;u.bio=bio}});
-socket.on('favorites_updated',({favorites})=>{if(currentUser){currentUser.favorites=favorites;localStorage.setItem('gb_user',JSON.stringify(currentUser))}renderGames()});
+socket.on('favorites_updated',({favorites})=>{if(currentUser){currentUser.favorites=favorites;localStorage.setItem('gb_user',JSON.stringify(currentUser))}renderGames();if(document.getElementById('page-favorites')?.classList.contains('active'))renderFavorites()});
 socket.on('new_comment',(c)=>{db.comments.push(c)});
 socket.on('comment_liked',({commentId,likes})=>{const c=db.comments.find(x=>x.id===commentId);if(c)c.likes=likes});
 socket.on('new_review',(r)=>{db.reviews.push(r)});
@@ -610,7 +622,7 @@ ${trailerId?`<div style="margin:10px 0"><iframe width="100%" height="200" src="h
 <div style="margin:8px 0"><b style="color:var(--accent)">Rating:</b> ${renderStars(avg)}</div>
 <div style="margin:8px 0">${[1,2,3,4,5].map(r=>`<i class="fas fa-star" style="color:${userRating&&userRating.rating>=r?'#ffc107':'#333'};cursor:pointer;font-size:1.1rem" onclick="rateGame(${gid},${r})"></i>`).join('')}</div>
 ${reviews.length?'<div style="margin:12px 0"><h3 style="color:var(--accent);font-size:.9rem;margin-bottom:8px">Reviews</h3>'+reviews.map(r=>`<div style="background:var(--card2);padding:8px;border-radius:6px;margin-bottom:6px"><div style="font-size:.75rem;font-weight:bold;color:var(--accent)">${esc(r.realName||r.user)} ${renderStars(r.rating)}</div><div style="font-size:.8rem;margin-top:2px">${esc(r.text)}</div><div style="font-size:.6rem;color:var(--text2);margin-top:3px"><span style="cursor:pointer" onclick="helpfulReview(${r.id})"><i class="fas fa-thumbs-up"></i> ${r.helpful||0}</span></div></div>`).join('')+'</div>':''}
-${currentUser?`<div style="margin:10px 0"><input type="text" id="review-title" placeholder="Review title" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;margin-bottom:4px"><textarea id="review-text" placeholder="Write a review..." style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;height:50px;resize:vertical"></textarea><button onclick="postReview(${gid})" style="margin-top:4px;padding:5px 12px;background:var(--grad);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem">Post Review</button></div>`:''}
+${currentUser?`<div style="margin:10px 0"><input type="text" id="review-title" placeholder="Review title" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;margin-bottom:4px"><div id="review-stars" style="margin-bottom:4px;font-size:1.1rem">${[1,2,3,4,5].map(r=>`<i class="fas fa-star" style="color:#333;cursor:pointer" onclick="setReviewRating(${r})" data-star="${r}"></i>`).join('')}</div><textarea id="review-text" placeholder="Write a review..." style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:.75rem;height:50px;resize:vertical"></textarea><button onclick="postReview(${gid})" style="margin-top:4px;padding:5px 12px;background:var(--grad);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem">Post Review</button></div>`:''}
 <div class="comments-section"><h3>Comments (${comments.length})</h3>
 ${comments.map(c=>`<div class="comment"><div class="avatar">${(c.realName||c.user)[0].toUpperCase()}</div><div class="c-body"><div class="name">${esc(c.realName||c.user)} ${c.role==='owner'?'<i class="fas fa-crown" style="color:#ffc107"></i>':c.role==='admin'?'<i class="fas fa-shield-alt" style="color:var(--accent)"></i>':''}</div><div class="text">${esc(c.text)}</div><div class="c-meta"><span onclick="likeComment(${c.id})"><i class="fas fa-heart"></i> ${c.likes||0}</span><span>${new Date(c.time).toLocaleDateString()}</span></div></div></div>`).join('')}
 ${currentUser?`<div class="comment-input"><input type="text" id="comment-input" placeholder="Comment..." onkeydown="if(event.key==='Enter')postComment(${gid})"><button onclick="postComment(${gid})"><i class="fas fa-paper-plane"></i></button></div>`:'<p style="font-size:.75rem;color:var(--text2)">Sign in to comment</p>'}
@@ -621,13 +633,17 @@ socket.emit('add_comment',{gameId:gid,text:'__view__',user:currentUser})}
 function closeDetail(){document.getElementById('game-detail-modal').classList.remove('active')}
 function postComment(gid){const inp=document.getElementById('comment-input');if(!inp||!inp.value.trim())return;socket.emit('add_comment',{gameId:gid,text:inp.value.trim(),user:currentUser});inp.value=''}
 function likeComment(cid){socket.emit('like_comment',{commentId:cid,user:currentUser})}
-function postReview(gid){const t=document.getElementById('review-title')?.value||'';const txt=document.getElementById('review-text')?.value||'';if(!txt.trim())return;socket.emit('add_review',{gameId:gid,title:t,text:txt,rating:5,user:currentUser});toast('Review posted!')}
+function postReview(gid){const t=document.getElementById('review-title')?.value||'';const txt=document.getElementById('review-text')?.value||'';if(!txt.trim())return;const stars=document.getElementById('review-stars');const rating=stars?parseInt(stars.dataset.rating||'5'):5;socket.emit('add_review',{gameId:gid,title:t,text:txt,rating:rating,user:currentUser});toast('Review posted!')}
+function setReviewRating(r){const stars=document.getElementById('review-stars');if(!stars)return;stars.dataset.rating=r;stars.querySelectorAll('i').forEach(i=>{i.style.color=parseInt(i.dataset.star)<=r?'#ffc107':'#333'})}
 function helpfulReview(rid){socket.emit('helpful_review',{reviewId:rid,user:currentUser})}
 function toggleFav(gid){socket.emit('toggle_favorite',{gameId:gid,user:currentUser})}
 function rateGame(gid,r){socket.emit('rate_game',{gameId:gid,rating:r,user:currentUser});toast('Rated '+r+' stars')}
 function requestLink(gid){window.location.href='/download/'+gid+'?u='+encodeURIComponent(currentUser.username)}
 function deleteGame(id){if(!confirm('Delete?'))return;socket.emit('delete_game',{id,user:currentUser})}
-function requestDownload(game){const loc=prompt('Where are you in school?');if(!loc)return;socket.emit('request_download',{game,user:currentUser,location:loc});toast('Request sent!')}
+function requestDownload(game){pendingDlGame=game;document.getElementById('dl-location').value='';document.getElementById('dl-request-modal').classList.add('active')}
+let pendingDlGame='';
+function submitDlRequest(){const loc=document.getElementById('dl-location').value.trim();if(!loc)return toast('Enter location');socket.emit('request_download',{game:pendingDlGame,user:currentUser,location:loc});document.getElementById('dl-request-modal').classList.remove('active');toast('Request sent!')}
+function closeDlRequest(){document.getElementById('dl-request-modal').classList.remove('active')}
 
 function openModal(){document.getElementById('modal-overlay').classList.add('active');['game-name','game-desc','game-img','game-download-link','game-developer','game-size','game-version','game-release','game-tags','game-platform','game-age','game-price','game-trailer'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});document.getElementById('game-category').value='Other';document.getElementById('img-preview').innerHTML='<span class="placeholder">Image URL</span>'}
 function closeModal(){document.getElementById('modal-overlay').classList.remove('active')}
@@ -667,7 +683,7 @@ function renderMyRequests(){if(!currentUser)return;document.getElementById('my-r
 function renderUserPastRequests(){if(!currentUser)return;document.getElementById('user-past-requests').innerHTML=db.gameRequests.filter(r=>r.user===currentUser.username).map(r=>`<div class="request-item"><div class="req-info"><h4>${esc(r.gameName)}</h4><p style="color:${r.status==='approved'?'var(--success)':r.status==='rejected'?'var(--danger)':'var(--warn)'};font-weight:bold;font-size:.8rem">${r.status.toUpperCase()}</p></div></div>`).join('')||'<div class="empty">None</div>'}
 
 function renderNotifications(){if(!currentUser)return;const myN=db.notifications.filter(n=>n.to===currentUser.username||(n.to==='admin'&&isAdmin()));const el=document.getElementById('notif-list');if(el)el.innerHTML=myN.reverse().map(n=>`<div class="request-item" style="opacity:${n.read?.5:1}"><div class="req-info"><h4>${esc(n.message)}</h4><p>${new Date(n.time).toLocaleString()}</p></div></div>`).join('')||'<div class="empty">None</div>'}
-function showNotifications(){let p=document.getElementById('page-notifications');if(!p){p=document.createElement('div');p.className='page';p.id='page-notifications';p.innerHTML='<h2><i class="fas fa-bell"></i> Notifications</h2><div style="display:flex;gap:6px;margin-bottom:10px"><button class="btn-admin-add" onclick="markAllRead()">Mark read</button><button class="btn-admin-add" onclick="clearNotifs()">Clear</button></div><div class="request-list" id="notif-list"></div>';document.body.appendChild(p)}
+function showNotifications(){let p=document.getElementById('page-notifications');if(!p){p=document.createElement('div');p.className='page';p.id='page-notifications';p.innerHTML='<h2><i class="fas fa-bell"></i> Notifications</h2><div style="display:flex;gap:6px;margin-bottom:10px"><button class="btn-admin-add" onclick="markAllRead()">Mark read</button><button class="btn-admin-add" onclick="clearNotifs()">Clear</button></div><div class="request-list" id="notif-list"></div>';document.querySelector('.main-content')?document.querySelector('.main-content').appendChild(p):document.body.appendChild(p)}
 document.querySelectorAll('.screen,.page').forEach(s=>s.classList.remove('active'));p.classList.add('active');renderNav();renderNotifications()}
 function markAllRead(){socket.emit('mark_read',{user:currentUser.username});db.notifications.forEach(n=>{if(n.to===currentUser.username||(n.to==='admin'&&isAdmin()))n.read=true});renderNotifications();renderNav()}
 function clearNotifs(){socket.emit('clear_notifications',{user:currentUser.username});db.notifications=db.notifications.filter(n=>n.to!==currentUser.username&&!(n.to==='admin'&&isAdmin()));renderNotifications();renderNav()}
@@ -703,7 +719,7 @@ document.getElementById('pref-accent').value=u.accentColor||'#00f0ff'}
 function updateProfile(showToast){socket.emit('update_profile',{user:currentUser,avatar:document.getElementById('profile-avatar').value.trim(),bio:document.getElementById('profile-bio').value.trim(),title:document.getElementById('profile-title').value.trim(),notifications:document.getElementById('pref-notif').checked,soundNotif:document.getElementById('pref-sound').checked,accentColor:document.getElementById('pref-accent').value});if(showToast)toast('Saved!')}
 socket.on('update_profile_result',(res)=>{if(res.ok){currentUser=res.user;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();renderNav();const s=document.getElementById('autosave-status');if(s){s.style.display='inline';setTimeout(()=>s.style.display='none',2000)}}});
 let _autoSaveTimer;
-function autoSave(){clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(()=>updateProfile(false),800)}
+function autoSave(){if(!document.getElementById('page-profile')?.classList.contains('active'))return;clearTimeout(_autoSaveTimer);_autoSaveTimer=setTimeout(()=>updateProfile(false),800)}
 document.addEventListener('DOMContentLoaded',()=>{
 ['profile-avatar','profile-bio','profile-title'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',autoSave)});
 ['pref-notif','pref-sound'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',autoSave)});
