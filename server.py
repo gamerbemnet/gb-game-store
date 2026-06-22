@@ -608,6 +608,19 @@ def handle_remove_user(data):
     if not user or user.get('role') not in('owner','admin') or target=='owner':return
     db_delete('users',{'username':target})
     socketio.emit('user_removed',target)
+@socketio.on('give_coins')
+def handle_give_coins(data):
+    user=data.get('user');target=data.get('target','');amount=data.get('amount',0)
+    if not user or user.get('role') not in ('admin','owner'):return
+    if not target or amount<=0:return
+    u=db_find_one('users',{'username':target})
+    if not u:emit('give_coins_result',{'error':'User not found'});return
+    db_update('users',{'username':target},inc={'coins':amount})
+    notif={'id':int(time.time()*1000),'to':target,'from':user['username'],'message':f'You received {amount} coins from {user.get("realName",user["username"])}!','read':False,'time':int(time.time()*1000),'type':'system'}
+    db_insert('notifications',notif);socketio.emit('new_notification',notif)
+    emit('give_coins_result',{'ok':True,'target':target,'amount':amount})
+    u2=db_find_one('users',{'username':target})
+    socketio.emit('user_coins_updated',{'username':target,'coins':u2.get('coins',0)})
 
 if __name__=='__main__':
     port=int(os.environ.get('PORT',3000))
