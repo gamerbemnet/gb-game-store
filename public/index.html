@@ -543,7 +543,7 @@ const unread=db.notifications.filter(n=>!n.read&&(n.to===currentUser.username||(
 let h=`<span class="user-badge"><span class="online-dot"></span><b>${esc(currentUser.realName||currentUser.username)}</b></span>`;
 const pages=[['page-games','fa-gamepad'],['page-favorites','fa-heart'],['page-myrequests','fa-list'],['page-requestgame','fa-plus-circle'],['page-chat','fa-comments'],['page-leaderboard','fa-trophy'],['page-shop','fa-store'],['page-profile','fa-user'],['page-tos','fa-file-contract']];
 pages.forEach(([p,ic])=>{h+=`<button onclick="showPage('${p}')" class="${document.getElementById(p)?.classList.contains('active')?'active':''}"><i class="fas ${ic}"></i></button>`});
-h+=`<button onclick="showNotifications()" style="position:relative"><i class="fas fa-bell"></i${unread?'<span class="notif-badge">'+unread+'</span>':''}</button>`;
+h+=`<button onclick="showNotifications()" style="position:relative"><i class="fas fa-bell"></i>${unread?'<span class="notif-badge">'+unread+'</span>':''}</button>`;
 if(isAdmin())h+=`<button onclick="showPage('page-admin')"><i class="fas fa-shield-alt"></i></button>`;
 h+=`<button onclick="toggleTheme()"><i class="fas fa-${document.body.classList.contains('light')?'moon':'sun'}"></i></button>`;
 h+=`<button onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>`;
