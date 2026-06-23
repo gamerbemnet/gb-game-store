@@ -458,6 +458,14 @@ body.light{--bg:#f0f2f5;--card:#fff;--card2:#e8e8e8;--border:#ddd;--text:#111;--
   <div class="modal" style="max-width:550px"><div id="game-detail-content"></div><div class="btn-row" style="margin-top:10px"><button class="btn-cancel" onclick="closeDetail()">Close</button></div></div>
 </div>
 
+<div class="modal-overlay" id="change-name-modal">
+  <div class="modal" style="max-width:380px">
+    <h2 id="change-name-title">Change Username</h2>
+    <input type="text" id="change-name-input" placeholder="New username">
+    <div class="btn-row"><button class="btn-cancel" onclick="closeChangeNameModal()">Cancel</button><button class="btn-save" onclick="submitChangeName()">Confirm</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal-overlay" id="dl-request-modal">
@@ -518,6 +526,7 @@ socket.on('download_updated',({id,status})=>{const r=db.downloadRequests.find(x=
 socket.on('game_request_updated',({id,status})=>{const r=db.gameRequests.find(x=>x.id===id);if(r)r.status=status;renderAdmin()});
 socket.on('user_updated',({username,role})=>{const u=db.users.find(x=>x.username===username);if(u)u.role=role;renderAdmin()});
 socket.on('user_removed',(u)=>{db.users=db.users.filter(x=>x.username!==u);renderAdmin()});
+socket.on('user_renamed',({old:oldName,new:newName})=>{const u=db.users.find(x=>x.username===oldName);if(u)u.username=newName;if(currentUser&&currentUser.username===oldName){currentUser.username=newName;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderNav()}renderAdmin();renderGames()});
 socket.on('new_notification',(n)=>{db.notifications.push(n);renderNav();if(currentUser&&(n.to===currentUser.username||(n.to==='admin'&&isAdmin())))toast(n.message)});
 socket.on('rating_updated',({gameId,avg,count})=>{const g=db.games.find(x=>x.id===gameId);if(g){g._avg=avg;g._count=count}renderGames()});
 socket.on('new_chat',(m)=>{db.chat.push(m);renderChat()});
@@ -731,12 +740,17 @@ const shopItems=[
 {name:'Color: Neon Pink',icon:'💗',price:45,type:'color'},{name:'Color: Neon Purple',icon:'💜',price:48,type:'color'},{name:'Color: Neon Yellow',icon:'💛',price:42,type:'color'},
 {name:'Color: Crimson',icon:'🟥',price:50,type:'color'},{name:'Color: Sapphire',icon:'🔷',price:52,type:'color'},{name:'Color: Emerald',icon:'🟢',price:55,type:'color'},
 {name:'Color: Amber',icon:'🟧',price:47,type:'color'},{name:'Color: Silver',icon:'🩶',price:43,type:'color'},{name:'Color: Midnight',icon:'⬛',price:60,type:'color'},
-{name:'Color: Obsidian',icon:'🖤',price:65,type:'color'},{name:'Color: Iridescent',icon:'🌈',price:100,type:'color'}
+{name:'Color: Obsidian',icon:'🖤',price:65,type:'color'},{name:'Color: Iridescent',icon:'🌈',price:100,type:'color'},
+{name:'Change Username',icon:'✏️',price:100,type:'special'},{name:'Change Name',icon:'📝',price:100,type:'special'}
 ];
 function renderShop(){if(!currentUser)return;document.getElementById('shop-coins').textContent=currentUser.coins||0;const inv=currentUser.inventory||[];
 document.getElementById('shop-grid').innerHTML=shopItems.map(item=>{const owned=inv.includes(item.name);return`<div class="shop-item"><div class="icon">${item.icon}</div><div class="name">${item.name}</div><div class="price">${owned?'Owned':item.price+' coins'}</div>${owned?`<button onclick="useItem('${esc(item.name)}')">Use</button>`:`<button onclick="buyItem('${esc(item.name)}',${item.price})" ${(currentUser.coins||0)<item.price?'disabled style="opacity:.5"':''}>Buy</button>`}</div>`}).join('')}
 function buyItem(name,price){socket.emit('shop_buy',{item:name,price:price,user:currentUser})}
-function useItem(name){socket.emit('use_item',{item:name,user:currentUser})}
+function useItem(name){if(name==='Change Username'||name==='Change Name')openChangeNameModal(name);else socket.emit('use_item',{item:name,user:currentUser})}
+function openChangeNameModal(item){const modal=document.getElementById('change-name-modal');modal.classList.add('active');document.getElementById('change-name-title').textContent=item;document.getElementById('change-name-input').value='';document.getElementById('change-name-input').placeholder=item==='Change Username'?'New username':'New display name';document.getElementById('change-name-input').focus()}
+function closeChangeNameModal(){document.getElementById('change-name-modal').classList.remove('active')}
+function submitChangeName(){const title=document.getElementById('change-name-title').textContent;const val=document.getElementById('change-name-input').value.trim();if(!val)return;const item=title==='Change Username'?'Change Username':'Change Name';socket.emit(title==='Change Username'?'change_username':'change_name',{newUsername:val,newName:val,user:currentUser});closeChangeNameModal()}
+socket.on('change_name_result',(res)=>{if(res.error)return toast(res.error);if(res.ok&&currentUser){if(res.newUsername)currentUser.username=res.newUsername;if(res.newName)currentUser.realName=res.newName;localStorage.setItem('gb_user',JSON.stringify(currentUser));renderProfile();renderNav();toast('Changed!')}})
 
 function renderProfile(){if(!currentUser)return;const u=db.users.find(x=>x.username===currentUser.username)||currentUser;
 document.getElementById('profile-card').innerHTML=`

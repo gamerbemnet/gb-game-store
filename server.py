@@ -146,24 +146,6 @@ if not db_find_one('users',{'username':'owner'}):
     hashed=bcrypt.hashpw('Bemnet@2014'.encode(),bcrypt.gensalt()).decode()
     db_insert('users',{'username':'owner','password':hashed,'role':'owner','realName':'Owner','location':'Admin Office','avatar':'','bio':'','badges':[],'favorites':[],'downloadHistory':[],'joinDate':int(time.time()*1000),'lastSeen':int(time.time()*1000),'notifications':True,'soundNotif':True,'theme':'dark','accentColor':'#00f0ff','fontSize':14,'achievements':[],'socialLinks':{},'status':'online','customStatus':'','inventory':[],'coins':0,'title':''})
 
-if not db_find_one('games',{}):
-    now=int(time.time()*1000)
-    games_to_add=[]
-    games_to_add.append(dict(name="Geometry Dash",img="",downloadLink="",description="Jump and fly through danger in this rhythm-based action platformer by RobTop.",category="Action",addedBy="owner",id=now+1,downloads=520,views=1800,size="100MB",developer="RobTop Games",releaseDate="2013-08-13",version="2.208",featured=True,screenshots=[],tags=["platformer","rhythm","difficult","indie"],minReqs="2GHz CPU, 512MB RAM",maxReqs="3GHz CPU, 2GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="WorldBox",img="",downloadLink="",description="God simulator and sandbox. Create worlds, drop disasters, spawn creatures.",category="Simulation",addedBy="owner",id=now+2,downloads=340,views=1100,size="200MB",developer="Maxim Karpenko",releaseDate="2021-12-17",version="0.51.2",featured=True,screenshots=[],tags=["sandbox","god-game","simulation","pixel-art"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Universe Sandbox",img="",downloadLink="",description="Physics-based space simulator. Create, destroy, and interact with solar systems.",category="Simulation",addedBy="owner",id=now+3,downloads=280,views=950,size="500MB",developer="Giant Army",releaseDate="2015-08-24",version="36.0.1",featured=False,screenshots=[],tags=["space","simulation","physics","sandbox"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 8GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Solar Sandbox",img="",downloadLink="",description="Build and simulate solar systems. Place planets and adjust gravity.",category="Simulation",addedBy="owner",id=now+4,downloads=190,views=620,size="150MB",developer="Solar Sandbox Dev",releaseDate="2023-01-01",version="1.0",featured=False,screenshots=[],tags=["sandbox","space","simulation","relaxing"],minReqs="2GHz CPU, 1GB RAM",maxReqs="3GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Stardew Valley",img="",downloadLink="",description="Build the farm of your dreams. Raise animals, grow crops, befriend villagers.",category="RPG",addedBy="owner",id=now+5,downloads=410,views=1350,size="500MB",developer="ConcernedApe",releaseDate="2016-02-26",version="1.6",featured=True,screenshots=[],tags=["farming","rpg","relaxing","pixel-art"],minReqs="2GHz CPU, 2GB RAM",maxReqs="3GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Hytale",img="",downloadLink="",description="A voxel sandbox adventure with RPG elements. Build, explore, and fight.",category="Adventure",addedBy="owner",id=now+6,downloads=380,views=1500,size="800MB",developer="Hypixel Studios",releaseDate="2026-01-01",version="Early Access",featured=True,screenshots=[],tags=["sandbox","voxel","rpg","adventure"],minReqs="2GHz CPU, 4GB RAM",maxReqs="4GHz CPU, 8GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="SimplePlanes 2",img="",downloadLink="",description="Design and fly your own aircraft with realistic physics.",category="Simulation",addedBy="owner",id=now+7,downloads=210,views=710,size="400MB",developer="Jundroo",releaseDate="2024-01-01",version="0.7.0",featured=False,screenshots=[],tags=["simulation","aviation","sandbox","creative"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Spaceflight Simulator",img="",downloadLink="",description="Build rockets, launch missions, and explore the solar system.",category="Simulation",addedBy="owner",id=now+8,downloads=260,views=880,size="300MB",developer="Stefano Cecchini",releaseDate="2018-07-01",version="1.5.9.8",featured=False,screenshots=[],tags=["space","simulation","physics","sandbox"],minReqs="1GHz CPU, 1GB RAM",maxReqs="2GHz CPU, 2GB RAM",trailer="",platform="Both",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Eaglercraft",img="",downloadLink="",description="Play Minecraft 1.12 in your browser. Offline-capable HTML5 Minecraft clone.",category="Adventure",addedBy="owner",id=now+9,downloads=450,views=1600,size="50MB",developer="LAX1DOFFICIAL",releaseDate="2022-01-01",version="1.12",featured=False,screenshots=[],tags=["sandbox","minecraft","browser","creative"],minReqs="Any browser",maxReqs="Chrome or Edge",trailer="",platform="Both",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="SNO",img="",downloadLink="",description="An indie adventure game with unique puzzles and atmospheric exploration.",category="Adventure",addedBy="owner",id=now+10,downloads=120,views=400,size="200MB",developer="SNO Dev",releaseDate="2024-01-01",version="1.04.31",featured=False,screenshots=[],tags=["adventure","indie","puzzle","exploration"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="Aviassembly",img="",downloadLink="",description="Build and fly aircraft in this physics-based aviation sandbox.",category="Simulation",addedBy="owner",id=now+11,downloads=170,views=560,size="250MB",developer="Aviassembly Dev",releaseDate="2023-01-01",version="1.0",featured=False,screenshots=[],tags=["aviation","simulation","sandbox","creative"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    games_to_add.append(dict(name="StellarDrive",img="",downloadLink="",description="Space exploration and driving game. Navigate planets and drive across alien terrain.",category="Racing",addedBy="owner",id=now+12,downloads=95,views=320,size="350MB",developer="StellarDrive Dev",releaseDate="2024-01-01",version="1.0",featured=False,screenshots=[],tags=["space","racing","exploration","driving"],minReqs="2GHz CPU, 2GB RAM",maxReqs="4GHz CPU, 4GB RAM",trailer="",platform="PC",ageRating="Everyone",price="Free",dlcs=[],changelog=[],faq=[]))
-    for g in games_to_add:
-        db_insert('games',g)
-    print(f'Seeded {len(games_to_add)} games')
 
 def get_setting(key,default=None):
     if USE_MONGO:
@@ -444,11 +426,11 @@ def handle_use(data):
     if not u:return
     inv=u.get('inventory',[])
     if item not in inv:return
-    inv.remove(item)
     color_map={'Color: Red Name':'#ff4466','Color: Gold Name':'#ffc107','Color: Green Name':'#00cc66','Color: Blue Name':'#4488ff','Color: Purple Name':'#aa44ff','Color: Pink Name':'#ff66aa','Color: Orange Name':'#ff8800','Color: Cyan Name':'#00cccc','Color: White Name':'#ffffff','Color: Rainbow Name':'#ff00ff','Color: Rainbow 2':'#ff88ff','Color: Neon Green':'#00ff66','Color: Neon Blue':'#0088ff','Color: Neon Pink':'#ff44aa','Color: Neon Purple':'#aa00ff','Color: Neon Yellow':'#ffff00','Color: Crimson':'#dc143c','Color: Sapphire':'#0f52ba','Color: Emerald':'#50c878','Color: Amber':'#ffbf00','Color: Silver':'#c0c0c0','Color: Midnight':'#191970','Color: Obsidian':'#1a1a1a','Color: Iridescent':'#8888ff'}
     title_map={'Title: Pro Gamer':'Pro Gamer','Title: Legend':'Legend','Title: VIP':'VIP','Title: OG':'OG','Title: Noob':'Noob','Title: Beast':'Beast','Title: God':'God','Title: Legend 2':'Legend 2','Title: Pro':'Pro','Title: Master':'Master','Title: King':'King','Title: Hero':'Hero','Title: Shadow':'Shadow','Title: Storm':'Storm','Title: Phantom':'Phantom','Title: Titan':'Titan','Title: Sage':'Sage','Title: Warrior':'Warrior','Title: Dragon':'Dragon','Title: Phoenix':'Phoenix','Title: Astronaut':'Astronaut','Title: Hacker':'Hacker','Title: Royal':'Royal','Title: Ninja':'Ninja','Title: Overlord':'Overlord','Title: Conqueror':'Conqueror','Title: Immortal':'Immortal','Title: Destroyer':'Destroyer','Title: Ascended':'Ascended','Title: Eternal':'Eternal','Title: Cosmic':'Cosmic','Title: Void':'Void','Title: Chaos':'Chaos','Title: Alpha':'Alpha','Title: Omega':'Omega','Title: Prime':'Prime','Title: Savage':'Savage','Title: Demonic':'Demonic','Title: Angelic':'Angelic','Title: Frost':'Frost','Title: Blaze':'Blaze','Title: Eclipse':'Eclipse','Title: Quantum':'Quantum','Title: Neon':'Neon','Title: Cyber':'Cyber'}
     all_colors={**color_map}
     all_titles={**title_map}
+    inv.remove(item)
     update={'inventory':inv}
     if item.startswith('Color:') and item in all_colors:
         update['accentColor']=all_colors[item]
@@ -461,6 +443,35 @@ def handle_use(data):
     db_update('users',{'username':user['username']},update)
     u=db_find_one('users',{'username':user['username']})
     emit('use_item_result',{'ok':True,'user':{'title':u.get('title',''),'accentColor':u.get('accentColor','#00f0ff'),'inventory':u.get('inventory',[]),'coins':u.get('coins',0)}})
+@socketio.on('change_username')
+def handle_change_username(data):
+    user=data.get('user');new_name=data.get('newUsername','').strip()
+    if not user or not new_name:return emit('change_name_result',{'error':'Enter a username'})
+    if len(new_name)<3:return emit('change_name_result',{'error':'Username must be 3+ chars'})
+    if new_name==user.get('username',''):return emit('change_name_result',{'error':'Same username'})
+    if db_find_one('users',{'username':new_name}):return emit('change_name_result',{'error':'Username taken'})
+    u=db_find_one('users',{'username':user['username']})
+    if not u:return emit('change_name_result',{'error':'User not found'})
+    inv=u.get('inventory',[])
+    if 'Change Username' not in inv:return emit('change_name_result',{'error':'You need "Change Username" item from shop'})
+    inv.remove('Change Username')
+    old_name=u['username']
+    db_update('users',{'username':old_name},{'username':new_name,'inventory':inv})
+    socketio.emit('user_renamed',{'old':old_name,'new':new_name})
+    emit('change_name_result',{'ok':True,'newUsername':new_name})
+@socketio.on('change_name')
+def handle_change_name(data):
+    user=data.get('user');new_name=data.get('newName','').strip()
+    if not user or not new_name:return emit('change_name_result',{'error':'Enter a name'})
+    if len(new_name)<2:return emit('change_name_result',{'error':'Name must be 2+ chars'})
+    u=db_find_one('users',{'username':user['username']})
+    if not u:return emit('change_name_result',{'error':'User not found'})
+    inv=u.get('inventory',[])
+    if 'Change Name' not in inv:return emit('change_name_result',{'error':'You need "Change Name" item from shop'})
+    inv.remove('Change Name')
+    db_update('users',{'username':user['username']},{'realName':new_name,'inventory':inv})
+    socketio.emit('profile_updated',{'username':user['username'],'avatar':u.get('avatar',''),'bio':u.get('bio','')})
+    emit('change_name_result',{'ok':True,'newName':new_name})
 @socketio.on('report')
 def handle_report(data):
     user=data.get('user')
