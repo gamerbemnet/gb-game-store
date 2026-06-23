@@ -1,10 +1,11 @@
-import os,time,bcrypt,re,secrets,json
+import os,time,bcrypt,re,secrets,json,sys
 import requests as http_requests
 from flask import Flask,send_from_directory,Response,request as flask_request
 from flask_socketio import SocketIO,emit
 
 app=Flask(__name__,static_folder='public')
 app.config['SECRET_KEY']=secrets.token_hex(32)
+sys.stdout.reconfigure(line_buffering=True)
 
 DB_PATH=os.path.join(os.path.dirname(__file__),'db.json')
 USE_SB=False
@@ -25,6 +26,7 @@ json_db=load_json()
 
 SB_URL=os.environ.get('SUPABASE_URL','')
 SB_KEY=os.environ.get('SUPABASE_KEY','')
+print(f'Env SUPABASE_URL={"SET" if SB_URL else "MISSING"} SUPABASE_KEY={"SET" if SB_KEY else "MISSING"}',flush=True)
 
 def sb_headers():
     return{'apikey':SB_KEY,'Authorization':f'Bearer {SB_KEY}','Content-Type':'application/json','Prefer':'return=representation'}
@@ -34,15 +36,16 @@ def sb_base():return f'{SB_URL}/rest/v1'
 if SB_URL and SB_KEY:
     try:
         r=http_requests.get(f'{sb_base()}/documents',headers=sb_headers(),params={'select':'id','limit':'1'},timeout=10)
+        print(f'Supabase check: status={r.status_code}',flush=True)
         if r.status_code==200:
             USE_SB=True
-            print('Connected to Supabase')
+            print('Connected to Supabase',flush=True)
         else:
-            print(f'Supabase check failed: {r.status_code} {r.text[:200]}')
+            print(f'Supabase check failed: {r.status_code} {r.text[:200]}',flush=True)
     except Exception as e:
-        print(f'Supabase connection failed: {e}')
+        print(f'Supabase connection failed: {e}',flush=True)
 if not USE_SB:
-    print('Using db.json fallback')
+    print('Using db.json fallback',flush=True)
 
 def sb_find_ids(col_name,query=None):
     url=f'{sb_base()}/documents'
@@ -76,7 +79,8 @@ def db_insert(col_name,doc):
         try:
             r=http_requests.post(f'{sb_base()}/documents',headers=sb_headers(),json={'collection':col_name,'data':doc},timeout=15)
             if r.status_code not in(200,201):print(f'SB insert error: {r.status_code} {r.text[:200]}')
-        except Exception as e:print(f'SB insert error: {e}')
+            else:print(f'SB insert OK: {col_name} status={r.status_code}',flush=True)
+        except Exception as e:print(f'SB insert error: {e}',flush=True)
     else:
         if col_name not in json_db:json_db[col_name]=[]
         json_db[col_name].append(doc)
@@ -165,6 +169,9 @@ typing_users={}
 if not db_find_one('users',{'username':'owner'}):
     hashed=bcrypt.hashpw('Bemnet@2014'.encode(),bcrypt.gensalt()).decode()
     db_insert('users',{'username':'owner','password':hashed,'role':'owner','realName':'Owner','location':'Admin Office','avatar':'','bio':'','badges':[],'favorites':[],'downloadHistory':[],'joinDate':int(time.time()*1000),'lastSeen':int(time.time()*1000),'notifications':True,'soundNotif':True,'theme':'dark','accentColor':'#00f0ff','fontSize':14,'achievements':[],'socialLinks':{},'status':'online','customStatus':'','inventory':[],'coins':0,'title':''})
+    print(f'Owner created. USE_SB={USE_SB}',flush=True)
+else:
+    print(f'Owner already exists. USE_SB={USE_SB}',flush=True)
 
 
 def get_setting(key,default=None):
