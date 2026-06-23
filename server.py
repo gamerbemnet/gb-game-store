@@ -195,14 +195,6 @@ def set_setting(key,value):
 @app.route('/')
 def index():return send_from_directory('public','index.html')
 
-@app.route('/ads.js')
-def proxy_ads():
-    try:
-        r=http_requests.get('https://pl29836648.effectivecpmnetwork.com/78/c8/6f/78c86f69ec008d2f9b114aa9d0e152fe.js',timeout=20,headers={'User-Agent':flask_request.headers.get('User-Agent',''),'Referer':flask_request.headers.get('Referer','')})
-        return Response(r.content,mimetype='application/javascript',headers={'Cache-Control':'public, max-age=3600','Access-Control-Allow-Origin':'*','Content-Disposition':'inline'})
-    except Exception as e:
-        print(f'Ad proxy failed: {e}')
-        return '// ad unavailable',200
 
 @app.route('/download/<int:game_id>')
 def proxy_download(game_id):
