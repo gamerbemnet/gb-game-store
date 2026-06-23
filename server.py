@@ -27,10 +27,13 @@ json_db=load_json()
 
 MONGO_URI=os.environ.get('MONGO_URI','')
 if MONGO_URI:
+    import certifi
+    ca=certifi.where()
     configs=[
-        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=10000,connectTimeoutMS=10000,socketTimeoutMS=10000),
-        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=15000,connectTimeoutMS=15000,socketTimeoutMS=15000),
-        dict(serverSelectionTimeoutMS=15000,connectTimeoutMS=15000,socketTimeoutMS=15000),
+        dict(serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000,tlsCAFile=ca),
+        dict(tls=True,tlsCAFile=ca,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
+        dict(tls=True,tlsAllowInvalidCertificates=True,tlsCAFile=ca,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
+        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
     ]
     for i,cfg in enumerate(configs):
         try:
