@@ -4,4 +4,3 @@ bcrypt
 gevent
 gevent-websocket
 requests
-pymongo[srv]

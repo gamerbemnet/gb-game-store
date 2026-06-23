@@ -2,15 +2,13 @@ import os,time,bcrypt,re,secrets,json
 import requests as http_requests
 from flask import Flask,send_from_directory,Response,request as flask_request
 from flask_socketio import SocketIO,emit
-from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError
 
 app=Flask(__name__,static_folder='public')
 app.config['SECRET_KEY']=secrets.token_hex(32)
 
 DB_PATH=os.path.join(os.path.dirname(__file__),'db.json')
-USE_MONGO=False
-mongo_db=None
+USE_SB=False
+json_db={}
 
 def load_json():
     if os.path.exists(DB_PATH):
@@ -25,112 +23,140 @@ def save_json(data):
 
 json_db=load_json()
 
-MONGO_URI=os.environ.get('MONGO_URI','')
-if MONGO_URI:
-    import certifi
-    ca=certifi.where()
-    configs=[
-        dict(serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000,tlsCAFile=ca),
-        dict(tls=True,tlsCAFile=ca,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
-        dict(tls=True,tlsAllowInvalidCertificates=True,tlsCAFile=ca,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
-        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=20000,connectTimeoutMS=20000,socketTimeoutMS=20000),
-    ]
-    for i,cfg in enumerate(configs):
-        try:
-            client=MongoClient(MONGO_URI,**cfg)
-            client.admin.command('ping')
-            mongo_db=client['gb_game_store']
-            USE_MONGO=True
-            print(f'Connected to MongoDB Atlas (config {i+1})')
-            break
-        except Exception as e:
-            print(f'MongoDB attempt {i+1} failed: {e}')
-    if not USE_MONGO:
-        print('All MongoDB attempts failed, using db.json fallback')
+SB_URL=os.environ.get('SUPABASE_URL','')
+SB_KEY=os.environ.get('SUPABASE_KEY','')
 
-def get_col(name):
-    if USE_MONGO:
-        return mongo_db[name]
-    return None
+def sb_headers():
+    return{'apikey':SB_KEY,'Authorization':f'Bearer {SB_KEY}','Content-Type':'application/json','Prefer':'return=representation'}
+
+def sb_base():return f'{SB_URL}/rest/v1'
+
+if SB_URL and SB_KEY:
+    try:
+        r=http_requests.get(f'{sb_base()}/documents',headers=sb_headers(),params={'select':'id','limit':'1'},timeout=10)
+        if r.status_code==200:
+            USE_SB=True
+            print('Connected to Supabase')
+        else:
+            print(f'Supabase check failed: {r.status_code} {r.text[:200]}')
+    except Exception as e:
+        print(f'Supabase connection failed: {e}')
+if not USE_SB:
+    print('Using db.json fallback')
+
+def sb_find_ids(col_name,query=None):
+    url=f'{sb_base()}/documents'
+    params={'collection':f'eq.{col_name}','select':'id,data'}
+    try:
+        r=http_requests.get(url,headers=sb_headers(),params=params,timeout=15)
+        if r.status_code!=200:return[]
+        docs=r.json()
+        if query:
+            docs=[d for d in docs if all(d['data'].get(k)==v for k,v in query.items())]
+        return docs
+    except Exception as e:
+        print(f'SB find error: {e}');return[]
 
 def db_find(col_name,query=None):
-    if USE_MONGO:
-        c=get_col(col_name)
-        if query: return list(c.find(query,{'_id':0}))
-        return list(c.find({},{'_id':0}))
-    return [x for x in json_db.get(col_name,[]) if not query or all(x.get(k)==v for k,v in query.items())]
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        return[d['data'] for d in docs]
+    return[x for x in json_db.get(col_name,[]) if not query or all(x.get(k)==v for k,v in query.items())]
 
 def db_find_one(col_name,query):
-    if USE_MONGO:
-        return get_col(col_name).find_one(query,{'_id':0})
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        return docs[0]['data'] if docs else None
     for x in json_db.get(col_name,[]):
-        if all(x.get(k)==v for k,v in query.items()): return x
+        if all(x.get(k)==v for k,v in query.items()):return x
     return None
 
 def db_insert(col_name,doc):
-    if USE_MONGO:
-        get_col(col_name).insert_one(doc)
+    if USE_SB:
+        try:
+            r=http_requests.post(f'{sb_base()}/documents',headers=sb_headers(),json={'collection':col_name,'data':doc},timeout=15)
+            if r.status_code not in(200,201):print(f'SB insert error: {r.status_code} {r.text[:200]}')
+        except Exception as e:print(f'SB insert error: {e}')
     else:
-        if col_name not in json_db: json_db[col_name]=[]
+        if col_name not in json_db:json_db[col_name]=[]
         json_db[col_name].append(doc)
         save_json(json_db)
 
 def db_update(col_name,query,update,set_=True,inc=None,push=None,pull=None):
-    if USE_MONGO:
-        c=get_col(col_name)
-        ops={}
-        if set_: ops['$set']={k:v for k,v in update.items()} if update else {}
-        if inc: ops['$inc']=inc
-        if push: ops['$push']=push
-        if pull: ops['$pull']=pull
-        c.update_one(query,ops)
-        return
-    for x in json_db.get(col_name,[]):
-        if all(x.get(k)==v for k,v in query.items()):
-            if update: x.update(update)
-            if inc:
-                for k,v in inc.items(): x[k]=x.get(k,0)+v
-            if push:
-                for k,v in push.items():
-                    if k not in x: x[k]=[]
-                    if isinstance(x[k],list): x[k].append(v)
-            if pull:
-                for k,v in pull.items():
-                    if k in x and isinstance(x[k],list) and v in x[k]: x[k].remove(v)
-    save_json(json_db)
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        if not docs:return
+        d=docs[0]
+        data=d['data'].copy()
+        if update and set_:data.update(update)
+        if inc:
+            for k,v in inc.items():data[k]=data.get(k,0)+v
+        if push:
+            for k,v in push.items():
+                if k not in data:data[k]=[]
+                if isinstance(data[k],list):data[k].append(v)
+        if pull:
+            for k,v in pull.items():
+                if k in data and isinstance(data[k],list) and v in data[k]:data[k].remove(v)
+        try:
+            r=http_requests.patch(f'{sb_base()}/documents?id=eq.{d["id"]}',headers=sb_headers(),json={'data':data},timeout=15)
+            if r.status_code not in(200,204):print(f'SB update error: {r.status_code}')
+        except Exception as e:print(f'SB update error: {e}')
+    else:
+        for x in json_db.get(col_name,[]):
+            if all(x.get(k)==v for k,v in query.items()):
+                if update:x.update(update)
+                if inc:
+                    for k,v in inc.items():x[k]=x.get(k,0)+v
+                if push:
+                    for k,v in push.items():
+                        if k not in x:x[k]=[]
+                        if isinstance(x[k],list):x[k].append(v)
+                if pull:
+                    for k,v in pull.items():
+                        if k in x and isinstance(x[k],list) and v in x[k]:x[k].remove(v)
+        save_json(json_db)
 
 def db_delete(col_name,query):
-    if USE_MONGO:
-        get_col(col_name).delete_one(query)
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        for d in docs:
+            try:http_requests.delete(f'{sb_base()}/documents?id=eq.{d["id"]}',headers=sb_headers(),timeout=15)
+            except Exception as e:print(f'SB delete error: {e}')
     else:
         json_db[col_name]=[x for x in json_db.get(col_name,[]) if not all(x.get(k)==v for k,v in query.items())]
         save_json(json_db)
 
 def db_delete_many(col_name,query):
-    if USE_MONGO:
-        get_col(col_name).delete_many(query)
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        for d in docs:
+            try:http_requests.delete(f'{sb_base()}/documents?id=eq.{d["id"]}',headers=sb_headers(),timeout=15)
+            except Exception as e:print(f'SB delete error: {e}')
     else:
         json_db[col_name]=[x for x in json_db.get(col_name,[]) if not all(x.get(k)==v for k,v in query.items())]
         save_json(json_db)
 
 def db_update_many(col_name,query,update):
-    if USE_MONGO:
-        get_col(col_name).update_many(query,{'$set':update})
+    if USE_SB:
+        docs=sb_find_ids(col_name,query)
+        for d in docs:
+            data=d['data'].copy()
+            data.update(update)
+            try:http_requests.patch(f'{sb_base()}/documents?id=eq.{d["id"]}',headers=sb_headers(),json={'data':data},timeout=15)
+            except Exception as e:print(f'SB update_many error: {e}')
     else:
         for x in json_db.get(col_name,[]):
-            if all(x.get(k)==v for k,v in query.items()):
-                x.update(update)
+            if all(x.get(k)==v for k,v in query.items()):x.update(update)
         save_json(json_db)
 
 def db_count(col_name,query=None):
-    if USE_MONGO:
-        return get_col(col_name).count_documents(query or {})
+    if USE_SB:
+        return len(sb_find_ids(col_name,query))
     return len(db_find(col_name,query))
 
 def db_aggregate(col_name,pipeline):
-    if USE_MONGO:
-        return list(get_col(col_name).aggregate(pipeline))
-    return []
+    return[]
 
 socketio=SocketIO(app,cors_allowed_origins='*',async_mode='gevent')
 online_users={}
@@ -142,16 +168,20 @@ if not db_find_one('users',{'username':'owner'}):
 
 
 def get_setting(key,default=None):
-    if USE_MONGO:
-        s=get_col('settings').find_one({'_id':key})
-        return s['value'] if s else default
+    if USE_SB:
+        docs=sb_find_ids('settings',{'_id':key})
+        return docs[0]['data'].get('value',default) if docs else default
     return json_db.get('settings',{}).get(key,default)
 
 def set_setting(key,value):
-    if USE_MONGO:
-        get_col('settings').update_one({'_id':key},{'$set':{'value':value}},upsert=True)
+    if USE_SB:
+        docs=sb_find_ids('settings',{'_id':key})
+        if docs:
+            http_requests.patch(f'{sb_base()}/documents?id=eq.{docs[0]["id"]}',headers=sb_headers(),json={'data':{'_id':key,'value':value}},timeout=15)
+        else:
+            db_insert('settings',{'_id':key,'value':value})
     else:
-        if 'settings' not in json_db: json_db['settings']={}
+        if 'settings' not in json_db:json_db['settings']={}
         json_db['settings'][key]=value
         save_json(json_db)
 
@@ -629,6 +659,6 @@ def handle_give_coins(data):
 
 if __name__=='__main__':
     port=int(os.environ.get('PORT',3000))
-    mode='MongoDB Atlas' if USE_MONGO else 'db.json'
+    mode='Supabase' if USE_SB else 'db.json'
     print(f'G&B GAME STORE v{get_setting("version","2.0.0")} on port {port} ({mode})')
     socketio.run(app,host='0.0.0.0',port=port,debug=False)
