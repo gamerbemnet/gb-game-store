@@ -27,15 +27,23 @@ json_db=load_json()
 
 MONGO_URI=os.environ.get('MONGO_URI','')
 if MONGO_URI:
-    try:
-        client=MongoClient(MONGO_URI,tls=True,tlsAllowInvalidCertificates=True,serverSelectionTimeoutMS=5000,connectTimeoutMS=5000,socketTimeoutMS=5000)
-        client.admin.command('ping')
-        mongo_db=client['gb_game_store']
-        USE_MONGO=True
-        print('Connected to MongoDB Atlas')
-    except Exception as e:
-        print(f'MongoDB failed ({e}), using db.json fallback')
-        USE_MONGO=False
+    configs=[
+        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=10000,connectTimeoutMS=10000,socketTimeoutMS=10000),
+        dict(tls=True,tlsAllowInvalidCertificates=True,tlsAllowInvalidHostnames=True,serverSelectionTimeoutMS=15000,connectTimeoutMS=15000,socketTimeoutMS=15000),
+        dict(serverSelectionTimeoutMS=15000,connectTimeoutMS=15000,socketTimeoutMS=15000),
+    ]
+    for i,cfg in enumerate(configs):
+        try:
+            client=MongoClient(MONGO_URI,**cfg)
+            client.admin.command('ping')
+            mongo_db=client['gb_game_store']
+            USE_MONGO=True
+            print(f'Connected to MongoDB Atlas (config {i+1})')
+            break
+        except Exception as e:
+            print(f'MongoDB attempt {i+1} failed: {e}')
+    if not USE_MONGO:
+        print('All MongoDB attempts failed, using db.json fallback')
 
 def get_col(name):
     if USE_MONGO:
