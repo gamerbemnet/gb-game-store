@@ -50,23 +50,6 @@ def get_col(name):
         return mongo_db[name]
     return None
 
-users_col=get_col('users') if USE_MONGO else None
-games_col=get_col('games') if USE_MONGO else None
-requests_col=get_col('downloadRequests') if USE_MONGO else None
-game_requests_col=get_col('gameRequests') if USE_MONGO else None
-notifications_col=get_col('notifications') if USE_MONGO else None
-ratings_col=get_col('ratings') if USE_MONGO else None
-chat_col=get_col('chat') if USE_MONGO else None
-comments_col=get_col('comments') if USE_MONGO else None
-reports_col=get_col('reports') if USE_MONGO else None
-announcements_col=get_col('announcements') if USE_MONGO else None
-polls_col=get_col('polls') if USE_MONGO else None
-changelogs_col=get_col('changelogs') if USE_MONGO else None
-events_col=get_col('events') if USE_MONGO else None
-faqs_col=get_col('faqs') if USE_MONGO else None
-reviews_col=get_col('reviews') if USE_MONGO else None
-settings_col=get_col('settings') if USE_MONGO else None
-
 def db_find(col_name,query=None):
     if USE_MONGO:
         c=get_col(col_name)
@@ -157,13 +140,13 @@ if not db_find_one('users',{'username':'owner'}):
 
 def get_setting(key,default=None):
     if USE_MONGO:
-        s=settings_col.find_one({'_id':key})
+        s=get_col('settings').find_one({'_id':key})
         return s['value'] if s else default
     return json_db.get('settings',{}).get(key,default)
 
 def set_setting(key,value):
     if USE_MONGO:
-        settings_col.update_one({'_id':key},{'$set':{'value':value}},upsert=True)
+        get_col('settings').update_one({'_id':key},{'$set':{'value':value}},upsert=True)
     else:
         if 'settings' not in json_db: json_db['settings']={}
         json_db['settings'][key]=value
